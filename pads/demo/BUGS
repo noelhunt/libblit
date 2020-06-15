@@ -1,0 +1,84 @@
+Very subtle bug in misc.c. Originally Journal's ctor was thus:
+
+Journal::Journal(){
+	pad = new Pad( (PadRcv*) this );
+	pad->banner( "%s", "Journal" );
+	pad->name( "%s", "Journal" );
+	pad->makecurrent();
+	pad->alarm();
+	Menu m;
+	m.last("create one", (Action)&Journal::create, 1);
+	m.last("create two", (Action)&Journal::create, 2);
+	pad->menu(m);
+}
+
+but padsterms dies because select, in wait.c, says there is
+something to read on fd 0, but read returns with 0. If the
+'makecurrent' is moved thus,
+
+Journal::Journal(){
+	pad = new Pad( (PadRcv*) this );
+	pad->banner( "%s", "Journal" );
+	pad->name( "%s", "Journal" );
+	pad->alarm();
+	Menu m;
+	m.last("create one", (Action)&Journal::create, 1);
+	m.last("create two", (Action)&Journal::create, 2);
+	pad->menu(m);
+	pad->makecurrent();
+}
+
+this bug no longer appears. I am certain it is related to this
+code in wait.c:
+
+		. . .
+		} else if (alarmtime) {
+			tv.tv_sec = alarmtime/60;
+			tv.tv_usec = (alarmtime%60) * 16666;
+			ret = select(maxfd, &smask, 0, 0, &tv);
+			if (ret == 0) {
+				alarmtime = 0;
+				P->state |= ALARM;
+				continue;
+			}
+		} else {
+			ret = select(maxfd, &smask, 0, 0, 0);
+		}
+		if (ret < 0)
+			continue;
+		if(rcvmask && FD_ISSET(0, &smask))
+			recv();
+
+but cannot work out what is going on. There is a call to wait
+and the first time around the loop 971 bytes are read, the next
+time around the loop, select says fd 0 is readable but recv,
+that is, read, returns 0.
+
+. . .
+wait(resource.8)
+wait() 0
+wait(resource.8)
+wait() 0
+wait(resource.8)
+wait() 0
+wait() 1  smask.10
+wait() 1a smask.11
+wait() 3
+wait() 3a smask.11
+wait() 5 smask.1 ret.1
+recv() i.971
+wait() 6
+wait() 0
+wait() 1  smask.11
+wait() 1a smask.11
+wait() 3
+wait() 3a smask.11
+wait() 5 smask.1 ret.1
+recv() i.0
+
+The wait is for MOUSE, in getrectb, during the call to
+MakeCurrent (sweep new window).
+
+Almost certainly related to the alarm code; if the 'makecurrent()'
+call is restored to its original location and all 'alarm()' calls
+are commented out, misc will not abort.
