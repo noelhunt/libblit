@@ -151,7 +151,7 @@ int TraceArgs( const char *fmt, ... ){
 	return 1;
 }
 
-static long *watchloc = 0, watchval;
+static int *watchloc = 0, watchval;
 
 PFI trace_ptr;
 PFI trace_fcn( const char *srcfile, int line ){
@@ -173,7 +173,7 @@ PFI trace_fcn( const char *srcfile, int line ){
 	return TraceArgs;
 }
 
-void watch(long *loc){
+void watch(int *loc){
 	if( watchloc = loc ){
 		watchval = *watchloc;
 		ifprintf("watching *%d = %d\n", watchloc, watchval );

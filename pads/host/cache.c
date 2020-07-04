@@ -11,35 +11,35 @@ char *CacheStats(){
 	return report;
 }
 
-ushort Index::sht()			  { return (major<<8) | minor; }
+uint Index::sht()			  { return (major<<16) | minor; }
 
-Item::Item(const char* t,Action a,long o) { text = t; action = a; opand = o;	}
+Item::Item(const char* t,Action a,int o) { text = t; action = a; opand = o;	}
 Item::Item()				  { text = "error"; action = 0; opand = 0;}
 
 int Cache::ok() { return this!=0; }	
 
-Cache::Cache( unsigned char maj, unsigned char min ){
+Cache::Cache( ushort maj, ushort min ){
 	trace( "0x%08x.Cache(%d,%d)", this, maj, min );	VOK;
 	root = 0;
 	SIZE = Index(maj,min);
 	current = Index(0,1);
 }
 
-ItemCache::ItemCache():Cache(100,200){		/* (250,250) for megabyte term */
+ItemCache::ItemCache():Cache(2048,1024){	/* (250,250) for megabyte term */
 	trace( "0x%08x.ItemCache()", this );	VOK;
 	cache = new Item** [SIZE.major];
 	ItemBytes += SIZE.major*4;		/* term */
 	R->pktstart( P_I_DEFINE );
-	R->sendshort(SIZE.sht());
+	R->sendlong(SIZE.sht());
 	R->pktend();
 };
 
-CarteCache::CarteCache():Cache(50,100){		/* (250,250) for megabyte term */
+CarteCache::CarteCache():Cache(2048,1024){	/* (250,250) for megabyte term */
 	trace( "0x%08x.CarteCache()", this );	VOK;
 	cache = new Carte** [SIZE.major];
 	CarteBytes += SIZE.major*4;		/* term */
 	R->pktstart( P_C_DEFINE );
-	R->sendshort(SIZE.sht());
+	R->sendlong(SIZE.sht());
 	R->pktend();
 };
 
@@ -95,7 +95,7 @@ Index ItemCache::place(Item i){
 	*(cache[current.major][current.minor]) = copy;
 	trace("%s:%d:%d", copy.text, copy.action, copy.opand);
 	R->pktstart(P_I_CACHE);
-	R->sendshort(current.sht());
+	R->sendlong(current.sht());
 	R->sendstring(sf("%0.64s", copy.text));
 	R->pktend();
 	++ItemsMade;
@@ -163,20 +163,20 @@ Index CarteCache::place(Carte *c){
 	*copy = *c;
 	for (i = 0; i <= copy->size; ++i) copy->bin[i] = c->bin[i];
 	R->pktstart(P_C_CACHE);
-	R->sendshort(current.sht());
+	R->sendlong(current.sht());
 	if ( copy->attrib&NUMERIC ) {
-		R->senduchar( 1 );
+		R->sendlong( 1 );
 		R->senduchar( copy->attrib );
-		R->sendshort( copy->bin[0].sht() );
-		R->sendshort( copy->bin[1].sht() );
+		R->sendlong( copy->bin[0].sht() );
+		R->sendlong( copy->bin[1].sht() );
 	} else {
-		R->senduchar( copy->size );
+		R->sendlong( copy->size );
 		R->senduchar( copy->attrib );
 		for (i = 0; i <= copy->size; ++i)
-			R->sendshort( copy->bin[i].sht() );
+			R->sendlong( copy->bin[i].sht() );
 	}
 	cartelimits(copy);
-	R->senduchar(copy->items);
+	R->sendlong(copy->items);
 	R->senduchar(copy->width);
 	R->pktend();
 	++CartesMade;

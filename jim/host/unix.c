@@ -3,24 +3,36 @@
 #include "msgs.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <fcntl.h>
 #include <signal.h>
+#include <unistd.h>
+#include <strings.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
 char errfile[64];
 
-extern	tempfile;
-char	*strcat();
+extern int tempfile;
 
-Unix(f, type, unixcmd, wholefile, display)
-	File *f;
-	char *unixcmd;
-{
-	register pid, rpid;
+void dprint(char *a, ...);
+void tellseek(File*);
+void unmodified(File*);
+void refresh(File*);
+void checkerrs(void);
+File *getname(char*);
+int nextname(char*, String*, int*);
+int namegetc(String*, int*);
+
+void Unix(File *f, int type, char *unixcmd, int wholefile, int display){
+	int pid, rpid;
 	int (*onbpipe)();
 	int retcode;
-	int	pipe1[2];
-	int	pipe2[2];
-	long	nbytes=0;
-	long	posn, ntosend;
+	int pipe1[2];
+	int pipe2[2];
+	long nbytes=0;
+	long posn, ntosend;
 	if(errfile[0]==0)
 		sprintf(errfile, "%s/jim.err", homedir? homedir : "/tmp");
 	if(wholefile){
@@ -66,7 +78,7 @@ if(f->selloc>length(f) || f->selloc+f->nsel>length(f))panic("in Unix(): can't ha
 				/*
 				 * It's ok if we get SIGPIPE here
 				 */
-				signal(SIGPIPE, (int (*)())0);
+				signal(SIGPIPE, (void (*)(int))0);
 				close(pipe2[0]);
 				exit(Fwritepart(f, posn, ntosend, pipe2[1]));
 			}
@@ -108,7 +120,7 @@ if(f->selloc>length(f) || f->selloc+f->nsel>length(f))panic("in Unix(): can't ha
 					f->selloc=f->origin=0;
 				f->nsel=nbytes;
 			}else
-				dprintf("status!=0; original not deleted.\n", (char *)0);
+				dprint("status!=0; original not deleted.\n", (char *)0);
 		}
 		checkerrs();
 		if(nbytes)
@@ -117,19 +129,17 @@ if(f->selloc>length(f) || f->selloc+f->nsel>length(f))panic("in Unix(): can't ha
 			refresh(f);
 	}
 }
-refresh(f)
-	register File *f;
-{
-	register x=f->nsel>32000? 32000 : f->nsel;
+void refresh(File *f){
+	int x=f->nsel>32000? 32000 : f->nsel;
 	send(f->id, O_SELECT, (int)(f->selloc-f->origin), 2, data2(x));
 	send(f->id, O_MOVE, -1, 2, data2(32767));
 	tellseek(f);
 }
-checkerrs(){
+void checkerrs(){
 	struct stat statb;
 	char buf[64];
-	register f;
-	register char *p;
+	int f;
+	char *p;
 	if(stat(errfile, &statb)==0 && statb.st_size){
 		if((f=open(errfile, 0)) != -1){
 			if(read(f, buf, sizeof buf-1)>0){
@@ -137,20 +147,17 @@ checkerrs(){
 					if(*p=='\n')
 						break;
 				*p=0;
-				dprintf("%s", buf);
+				dprint("%s", buf);
 				if(p-buf < statb.st_size-1)	/* -1 for newline */
-					dprintf("...");
+					dprint("...");
 			}
 			close(f);
 		}
-		dprintf("\n");
+		dprint("\n");
 	} else
 		unlink(errfile);
 }
-File *
-getname(s)
-	char *s;
-{
+File *getname(char *s){
 	register File *f, *new=0, *old=0;
 	char name[128];
 	File *names;
@@ -160,7 +167,7 @@ getname(s)
 	if((names=Fnew())==0)
 		error("couldn't create temp buffer", (char *)0);
 	Fload(Fcreat(names, ""));
-	strinit(&text);
+	Strinit(&text);
 	sprintf(name, "echo %s", s);
 	Unix(names, '<', name, 0, 0);
 	Fsave(names, &text, 0L, length(names));
@@ -180,22 +187,18 @@ getname(s)
 			new=f;
     AlreadyThere:;
 	}
-	strfree(&text);
+	Strfree(&text);
 	if(new){
-		dprintf("grabbing %s\n", charstar(&new->name));
+		dprint("grabbing %s\n", charstar(&new->name));
 		return new;
 	}
 	if(old)
-		dprintf("grabbing %s\n", charstar(&old->name));
+		dprint("grabbing %s\n", charstar(&old->name));
 	return old;
 }
-nextname(as, str, np)
-	char *as;
-	String *str;
-	int *np;
-{
-	register char *s=as;
-	register c;
+int nextname(char *as, String *str, int *np){
+	char *s=as;
+	int c;
 	do; while((c=namegetc(str, np))==' ');
 	do{
 		if((*s++=c)==0)
@@ -204,11 +207,8 @@ nextname(as, str, np)
 	*s=0;
 	return s>as;
 }
-namegetc(s, np)
-	String *s;
-	int *np;
-{
-	register c;
+int namegetc(String *s, int *np){
+	int c;
 	if(*np>=s->n)
 		return 0;
 	if((c=s->s[*np])<' ' || (c&0200))	/* ignore frogs */

@@ -11,7 +11,7 @@
 #define CNTRL_U 025
 #define KBDLEN 90
 
-char KBDStr[KBDLEN]=  "\1";
+char KBDStr[KBDLEN]=  "";
 
 uchar coffeeset[]={
 	0x01, 0x00, 0x00, 0xE0, 0x00, 0x10, 0x03, 0xE0,
@@ -69,12 +69,12 @@ void main(int argc, char **argv){
 
 	extern ulong _fgpixel, _bgpixel;
 
-	h = fontheight(&defont);
+	h = fontheight(font);
 	y = h + 35;
-	w = strwidth(&defont, "m");
+	w = fontwidth(font);
 
 	KBDrect = Jfscreen.r;
-	KBDrect.min.y = KBDrect.max.y - (fontheight(&defont)+4);
+	KBDrect.min.y = KBDrect.max.y - (fontheight(font)+4);
 	KBDrect.min.x += 1;
 	KBDrect.max.x -= 1;
 
@@ -144,9 +144,6 @@ void main(int argc, char **argv){
 	bitblt(&screen, Pt(64,0), b64, b64->r, D&~S);
 	bitblt(&screen, Pt(64,64), b64, b64->r, D|S);
 
-			/* screenswap	*/
-//	screenswap(&screen, Rect(0,0,128,128), Rect(0,256,128,384));
-
 	for(;;){
 		char *t;
 		int len;
@@ -159,10 +156,13 @@ void main(int argc, char **argv){
 			if( c == '\r' )
 				break;
 			len = strlen(t = KBDStr);
-			if( c == '\b' && len > 1 ){
+			if( c == '\b' ){
+#ifdef BLIT
 				t[len-2] = 001;
 				t[len-1] = 000;
-				continue;
+#else
+				t[len-1] = 000;
+#endif
 			}
 			KBDAppend(c);
 			PaintKBD();
@@ -177,20 +177,29 @@ void KBDAppend(int c){
 
 	if( c < 040 || (c&0200) || len >= KBDLEN ){
 		if( c == CNTRL_U ){
+#ifdef BLIT
 			t[0] = 001;
 			t[1] = 000;
+#else
+			t[0] = 000;
+#endif
 		}
 		if( c != '\t' )		/* bug: \t when len >= KBDLEN !! */
 			return;
 	}
+#ifdef BLIT
 	t[len-1] = c;
 	t[len] = 001;
 	t[len+1] = 000;
+#else
+	t[len] = c;
+	t[len+1] = 000;
+#endif
 }
 
 void PaintKBD(){
-	rectf( &screen, insetrect(KBDrect, 2), 0, S );
-	string(&screen, addpt(KBDrect.min,Pt(1,2)), &defont, KBDStr, ~0, F&~D);
+	rectf( &screen, insetrect(KBDrect, 2), pixval(0xFFFFFF, 0), S );
+	string(&screen, addpt(KBDrect.min,Pt(1,2)), font, KBDStr, pixval(0, 0), F&~D);
 }	
 
 void MuxSnarf(){

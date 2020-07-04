@@ -1,4 +1,8 @@
+#if defined(sun)
 #include <strings.h>
+#elif defined(linux)
+#include <string.h>
+#endif
 #include <blit.h>
 
 #define scale(x, inmin, inmax, outmin, outmax)\
@@ -22,7 +26,6 @@ int menuhit(int but, Menu *m){
 	Rectangle sr, tr, mr;	/* scroll, text, menu */
 	register Bitmap *b;
 	char *s, *(*generator)(), *from, *to, fill[64];
-	Font *font = &defont;
 	int spacing = fontheight(font);
 	int charwidth = fontwidth(font);
 

@@ -16,17 +16,35 @@ uchar Lightgrey[] ={
 	0x11, 0x11, 0x44, 0x44, 0x11, 0x11, 0x44, 0x44,
 };
 
+uchar arrowbits[] = {
+	0x00, 0x00, 0x00, 0x40, 0x00, 0x60, 0x00, 0x70,
+	0x1f, 0xf8, 0x1f, 0xfc, 0x1f, 0xfe, 0x1f, 0xfe,
+	0x1f, 0xfc, 0x1f, 0xf8, 0x00, 0x70, 0x00, 0x60,
+	0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
 void main (int argc, char **argv){
 	Bitmap *lightgrey, *darkgrey;
+	Bitmap *arrow, *arrow2;
 	Rectangle r;
 
 	request(MOUSE);
 	initdisplay(argc, argv);
 
-	darkgrey =balloc(Rect(0,0,16,16), 0);
+	darkgrey = balloc(Rect(0,0,16,16), 0);
 	wrbitmap(darkgrey, 0, 16, Darkgrey);
 	lightgrey = balloc(Rect(0,0,16,16), 0);
 	wrbitmap(lightgrey, 0, 16, Lightgrey);
+
+	arrow = balloc(Rect(0,0,16,16), 0);
+	loadbitmap(arrow, 0, 16, arrowbits);
+	bitblt(&screen, Pt(200,200), arrow, arrow->r, S);
+
+	arrow2 = balloc(Rect(0,0,16,16), 0);
+	bitblt(arrow2, ZPoint, arrow, arrow->r, S);
+	bitblt(arrow2, ZPoint, arrow2, arrow2->r, F&~D);
+//	bitblt(&screen, Pt(300,300), &screen, Rect(0,0,32,32), F);
+	bitblt(&screen, Pt(216,200), arrow2, arrow->r, S);
 
 	/* ngetrect allows optional blocking so this can work */
 	for(;;nap(1)){

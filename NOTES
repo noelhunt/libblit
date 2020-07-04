@@ -1,0 +1,47 @@
+                                   - 1 -
+
+       Libraries and Tools for running Blit programs under X11
+
+         LibXg     The  original  library of routines for emulating
+                   Blit/Jerq graphics in X11 was 'libj',  found  in
+                   the  'jtools'  distribution  that Bell Labs made
+                   around 1987. It emulated Blit graphics in X11 as
+                   well   as   Suntools,  but  it  was  limited  to
+                   monochrome displays.  LibXg dates from the early
+                   1990s  and has support for colour; It appears to
+                   be a kind of  transition  from  the  early  Blit
+                   graphics   model   to   what  eventually  became
+                   'libdraw' in Plan9 (and thus Plan9 Port).
+
+         Libblit   The library which emulates a Blit terminal.  Not
+                   all  graphics  routines  from  libXg  have  been
+                   included,  notably  missing  are  routines   for
+                   drawing  circles,  ellipses  etc.  They  are not
+                   needed for the purpose of building 'pads', 'pi',
+                   or  'jim'.  They  can  be  compiled  from  libXg
+                   without any difficulty.
+
+         Libjerq   Libblit somewhat  modified  to  handle  Freetype
+                   fonts. The results were disappointing.
+
+         Pads      The  graphical  engine,  as  it  were, for 'pi',
+                   although it can be used more generally.  I  have
+                   implemented a front-end for 'mh' with it.
+
+         Jim       Rob  Pike's  first  graphical  editor for Eighth
+                   Edition Unix, dating from 1985  or  thereabouts.
+                   It  also  needs  to  be built against 'libblit',
+                   being structured as a typical Blit program  with
+                   a  'host'  and  'terminal' part. The port is not
+                   finished.
+
+         Demo      Various sample programs  demonstrating  features
+                   of libblit.
+
+         Doc       An  ms  document written by Andrew Hume, approx-
+                   imately in 1985,  describing  various  (new,  at
+                   that time) graphical routines written by various
+                   people.  I  have  included   this   because   it
+                   documents  the  features of 'nmenuhit' (known as
+                   'mhit' in the document).
+

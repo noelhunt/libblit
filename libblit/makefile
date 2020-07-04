@@ -1,14 +1,16 @@
 #	Copyright (c) 1992 AT&T - All rights reserved.
 #
 AR	= /usr/ccs/bin/ar rcs
+AR	= ar rcs
 DEFINES	= -DPOLL
 INCLUDES = -I. -I/usr/X11R6/include
 XLIBS	= -L/usr/lib -lX11
 CC	= cc
+MACH	= -m32	# default on Solaris
 CFLAGS	= $(DEFINES) $(INCLUDES) -g
 LIB	= libblit.a
 
-SRCS:sh=  ls *.c
+SRCS:sh= ls *.c
 
 OBJS=	$(SRCS:.c=.o)
 

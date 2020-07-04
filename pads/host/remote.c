@@ -1,24 +1,39 @@
-#define BSD_COMP
-#include <sys/stropts.h>
-#include <sys/ioctl.h>
+#if defined(sun)
+# define TTCOMPAT
+# define BSD_COMP
+# include <sys/stropts.h>
+# include <sys/ioctl.h>
+#elif defined(linux)
+# include <termios.h>
+# include <unistd.h>
+#endif
 #include <pads.h>
 SRCFILE("remote.c")
 
 void Remote::checkproto(int p)		{ if( get()!=p ) err(); }
 void Remote::proto(int p)		{ put( p ); }
 
-long Remote::rcvlong()			{ return (long)  shiftin( P_LONG  ); }
+int Remote::rcvlong()			{ return (int)   shiftin( P_LONG  ); }
+#ifdef __x86_64
+long Remote::rcvvlong()			{ return (long)  shiftin( P_VLONG  ); }
+#endif
 short Remote::rcvshort()		{ return (short) shiftin( P_SHORT ); }
 unsigned char Remote::rcvuchar()	{ return (uchar) shiftin( P_UCHAR ); }
 
-void Remote::sendlong(long  x)		{ shiftout( P_LONG, x );	 }
-void Remote::sendshort(short x)		{ shiftout( P_SHORT, (long) x ); }
-void Remote::senduchar(uchar x)		{ shiftout( P_UCHAR, (long) x ); }
+void Remote::sendlong(int x)		{ shiftout( P_LONG, x );	 }
+#ifdef __x86_64
+void Remote::sendvlong(long x)		{ shiftout( P_VLONG, x );	 }
+#endif
+void Remote::sendshort(short x)		{ shiftout( P_SHORT, (int) x ); }
+void Remote::senduchar(uchar x)		{ shiftout( P_UCHAR, (int) x ); }
 void Remote::pktflush()			{ writesize = 0; pktend(); 	}
 
 void Remote::pktstart(char c){
 	const char *ProtoToString(Protocol);
+# undef PROTODEBUG
+#ifdef PROTODEBUG
 	fprintf(stderr, "host -> %s\n", ProtoToString((Protocol)c));
+#endif
 	put(c);
 }
 
@@ -29,11 +44,19 @@ void Remote::put(char c){
 }
 
 void Remote::sendobj(PadRcv *o){
-	sendlong((long)o);
+#ifndef __x86_64
+	sendlong((int)o);
+#else
+	sendvlong((long)o);
+#endif
 }
 
 PadRcv *Remote::rcvobj(){
+#ifndef __x86_64
 	PadRcv *obj = (PadRcv*)rcvlong();
+#else
+	PadRcv *obj = (PadRcv*)rcvvlong();
+#endif
 	short oid = rcvshort();
 	if (obj && obj->oid != oid)
 		obj = 0;
@@ -46,10 +69,10 @@ void Remote::err(const char *e){
 	PadsError(e);
 }
 
-#ifdef SAMTERM
-Remote::Remote(int in, int out){
-	fd[0] = in;
-	fd[1] = out;
+#ifdef PIPE2
+Remote::Remote(int fi, int fo){
+	fd[0] = fi;
+	fd[1] = fo;
 	pktsize = writesize = pktbase = 0;
 }
 #else
@@ -59,24 +82,35 @@ Remote::Remote(int opened){
 }
 #endif
 Remote::Remote(const char *dev){
-	struct sgttyb tty;
-#ifndef SAMTERM
+#ifndef PIPE2
 	fd = open(dev, 2);
-#ifdef TIOCGETP
+#ifdef TTCOMPAT
+	struct sgttyb tty;
 	ioctl(fd, I_PUSH, "ttcompat");
 	if( ioctl(fd, TIOCGETP, &tty) ) err("tty ioctl: GETP failed");
 	tty.sg_flags = (tty.sg_flags|CBREAK|RAW) & ~ECHO;
 	if( ioctl(fd, TIOCSETP, &tty) ) err("tty ioctl: SETP failed");
 	if( ioctl(fd, TIOCEXCL, 0)  ) err("tty ioctl: EXCL failed");
+#else
+	struct termios ttyb;
+	tcgetattr(fd, &ttyb);
+	cfmakeraw(&ttyb);
+	tcsetattr(fd, TCSANOW, &ttyb);
 #endif
 #else
 	fd[1] = open(dev, 2);
-#ifdef TIOCGETP
+#ifdef TTCOMPAT
+	struct sgttyb tty;
 	ioctl(fd[1], I_PUSH, "ttcompat");
 	if( ioctl(fd[1], TIOCGETP, &tty) ) err("tty ioctl: GETP failed");
 	tty.sg_flags = (tty.sg_flags|CBREAK|RAW) & ~ECHO;
 	if( ioctl(fd[1], TIOCSETP, &tty) ) err("tty ioctl: SETP failed");
 	if( ioctl(fd[1], TIOCEXCL, 0)  ) err("tty ioctl: EXCL failed");
+#else
+	struct termios ttyb;
+	tcgetattr(fd[1], &ttyb);
+	cfmakeraw(&ttyb);
+	tcsetattr(fd[1], TCSANOW, &ttyb);
 #endif
 #endif
 	pktsize = writesize = 0;
@@ -86,8 +120,8 @@ void Remote::share(){
 	trace( "%d.share()", this );
 }	
 
-long Remote::shiftin(int bytes){
-	long shifter = 0;
+int Remote::shiftin(int bytes){
+	int shifter = 0;
 
 	trace("0x%08x.shiftin(bytes.%s)", this, debug(bytes));
 	checkproto( bytes );
@@ -95,7 +129,7 @@ long Remote::shiftin(int bytes){
 	return shifter;
 }
 
-void Remote::shiftout( int bytes, long shifter ){
+void Remote::shiftout( int bytes, int shifter ){
 	proto( bytes );
 	do { put( (char)(shifter>>( (--bytes)*8 )) ); } while( bytes );
 }
@@ -105,7 +139,7 @@ void Remote::pktend(){
 #ifdef TAC
 	if( pktsize<=0 ) err();
 	if (pktbase + pktsize > writesize) {
-#ifndef SAMTERM
+#ifndef PIPE2
 		if (write(fd, (char*)writebuffer, pktbase) != pktbase)
 #else
 		if (write(fd[1], (char*)writebuffer, pktbase) != pktbase)
@@ -119,7 +153,7 @@ void Remote::pktend(){
 	pktsize = 0;
 #else
 	if (pktsize > writesize) {
-#ifndef SAMTERM
+#ifndef PIPE2
 		if (write(fd, (char*)writebuffer, pktsize) != pktsize)
 #else
 		if (write(fd[1], (char*)writebuffer, pktsize) != pktsize)
@@ -155,32 +189,9 @@ void Remote::sendstring(const char *s){
 	while( len-- ) put(*s++); 
 }
 
-#define BULKREAD
-
 #include <errno.h>
 
 long BytesFromTerm;
-#ifndef BULKREAD
-int Remote::get(){
-	char c;
-	trace("0x%08x.get pktsize.%d", this, pktsize);
-	if (pktsize) {
-		err();
-		return 0;
-	}
-#ifndef SAMTERM
-	while (read(fd, &c, 1) != 1) {
-#else
-	while (read(fd[0], &c, 1) != 1) {
-#endif
-		if (errno == EINTR)
-			continue;
-		err();
-	}
-	++BytesFromTerm;
-	return c;
-}
-#else
 int Remote::get(){
 	static uchar buf[128];
 	static int i, nleft = 0;
@@ -191,7 +202,7 @@ int Remote::get(){
 	}
 	if( nleft <= 0 ){
 again:
-#ifndef SAMTERM
+#ifndef PIPE2
 		if( (nleft = read(fd, (char *)buf, sizeof buf)) < 0 ){
 #else
 		if( (nleft = read(fd[0], (char *)buf, sizeof buf)) < 0 ){
@@ -206,4 +217,3 @@ again:
 	++BytesFromTerm, --nleft;
 	return (int)buf[i++];
 }
-#endif

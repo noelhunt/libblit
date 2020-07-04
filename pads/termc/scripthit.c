@@ -12,11 +12,11 @@ enum {
 	BLACKBORDER =  2,	/* width of outlining border		*/
 	BORDER      =  2,	/* outside to selection boxes		*/
 	DELTA       =  6,
-	DISPLAY     = 13,
+	DISPLAY     = 15,
 	GULLY       =  4,	/* between text and scroll bar		*/
 	MARGIN      =  3,	/* outside to text			*/
 	MAXDEPTH    = 16,
-	MAXUNSCROLL = 21,	/* maximum #entries before scrolling turns on */
+	MAXUNSCROLL = 20,	/* maximum #entries before scrolling turns on */
 	MBORDER     =  2,	/* outside to selection boxes		*/
 	MENUDEPTH   =  8,	/* maximum depth of cascade		*/
 	NSCROLL     = 13,	/* number entries in scrolling part	*/
@@ -62,8 +62,6 @@ void Limits(Script *s){
 
 #define bound( x, low, high ) ( min( high, max( low, x ) ) )
 
-static ulong menucols[NCOL] = { 0 };
-
 static void Setcols(void){
 	extern ulong _fgpixel;
 
@@ -102,14 +100,22 @@ void PaintEntry(Entry *e, Rectangle r, int flag, int charswide){
 	rectf(&screen, r, flag? menucols[HIGH]: menucols[BACK], S);
 	string(&screen, q, font, fill, flag? menucols[HTXT]: menucols[TEXT], S);
 	if( e->script ){
-		static Bitmap *bb = 0;
-		Rectangle s = Rect(0,0,ARROWSIZE,ARROWSIZE);
+		static Bitmap *bb = 0, *bh = 0;
 		Point qq = Pt(r.max.x-ARROWSIZE,q.y+1);
 		if( !bb ){
-			bb = balloc(s, 0);
-			loadbitmap(bb, s.min.y, s.max.y, arrowdata);
+			bb = balloc(Rect(0,0,ARROWSIZE,ARROWSIZE), 0);
+			loadbitmap(bb, 0, ARROWSIZE, arrowdata);
+			bh = balloc(Rect(0,0,ARROWSIZE,ARROWSIZE), screen.ldepth);
+			rectf(bh, bh->r, menucols[HTXT], S);
 		}
+#ifndef MASK
 		bitblt(&screen, qq, bb, bb->r, flag? D&~S: D|S);
+#else
+		if( !flag )
+			bitblt(&screen, qq, bb, bb->r, flag? D&~S: D|S);
+		else
+			copymasked(&screen, qq, bh, bb, bh->r);
+#endif
 	}
 }
 
@@ -118,14 +124,15 @@ static void flip(Rectangle, int, int, Script*, int, Bitmap*, Bitmap*);
 struct info { int hit; int top; };
 
 Entry *ScriptHit(Script *sh, int but, RectList *rl){
-	int width, i, j, top, newtop, hit, newhit, items, lines, charswide;
+	int width, i, j, items, lines, charswide;
+	int top, newtop, hit, newhit, scrolling;
 	Point p, q, savep, baro, barc;
 	Rectangle sr, tr, mr, nr;	/* scroll, text, menu, next */
 	Bitmap *bar = 0;
 	Bitmap *backup, *save;
-	register char *s, *from, *to;
-	register Script *m;
-	register Entry *e;
+	char *s, *from, *to;
+	Script *m;
+	Entry *e;
 	RectList lrl, *l;
 
 #define sro sr.min
@@ -135,7 +142,6 @@ Entry *ScriptHit(Script *sh, int but, RectList *rl){
 #define mro mr.min
 #define mrc mr.max
 
-	if(menucols[TEXT]==0) Setcols();
 	charswide = items = 0;
 	for( m = sh; m; m = m->more ){
 		CIndex = m->cindex;
@@ -152,11 +158,13 @@ Entry *ScriptHit(Script *sh, int but, RectList *rl){
 	width = charswide*CHARWIDTH+RMARGIN;
 	sro.x = sro.y = src.x = mro.x = mro.y = 0;
 	tro.x = BORDER;
+	scrolling = 0;
 	if( items <= MAXUNSCROLL ) lines = items;
 	else {
 		lines = DISPLAY;
 		tro.x = src.x = BARWIDTH;
 		sro.x = sro.y = BORDER;
+		scrolling++;
 	}
 	tro.y = ASCEND;
 	mrc = trc = addpt(tro, Pt(width,min(items,lines)*SPACING) );
@@ -181,7 +189,7 @@ PaintMenu:
 	rectf(&screen, mr, menucols[BACK], S);
 	border(&screen, mr, BORDER, menucols[BORD]);
 	top = newtop;
-	if( items > DISPLAY ){
+	if( scrolling && items >= DISPLAY ){
 		baro.y = scale(top, 0, items, sro.y, src.y);
 		baro.x = sro.x;
 		barc.y = scale(top+DISPLAY, 0, items, sro.y, src.y);

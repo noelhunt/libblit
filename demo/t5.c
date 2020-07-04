@@ -20,7 +20,7 @@ hfn() [f3] gets called when item is selected
 
 #define PRINT(x) {					\
 	CLEARLN;					\
-	string(&screen, addpt(Drect.min,Pt(5,0)), &defont, (x), ~0, S);	\
+	string(&screen, addpt(Drect.min,Pt(5,0)), font, (x), pixval(0,0), S);	\
 }
 				
 void quit(), f1(), f2(), f3();

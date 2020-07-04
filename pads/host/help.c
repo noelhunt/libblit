@@ -38,7 +38,7 @@ const char *helptext[] = {
 class Help : public PadRcv {
 	Pad	*pad;
 	int	lines;
-	void	linereq(long,Attrib=0);
+	void	linereq(int,Attrib=0);
 public:
 		Help();
 };
@@ -53,7 +53,7 @@ Help::Help(){
 	pad->name( "help" );
 }
 
-void Help::linereq(long l, ushort Attrib){
+void Help::linereq(int l, ushort Attrib){
 	trace( "%d.linereq(%d)", this, l );
 	if( l>=1 && l<=lines )
 		pad->insert( l, Attrib, helptext[l-1] );

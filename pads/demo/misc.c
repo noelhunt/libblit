@@ -2,7 +2,7 @@
 #include <time.h>
 
 class Creator : public PadRcv {
-	void	linereq(long,Attrib=0);
+	void	linereq(int,Attrib=0);
 public:
 	Pad	*pad;
 		Creator();
@@ -10,7 +10,7 @@ public:
 };
 
 class Journal : public PadRcv {
-	void	linereq(long,Attrib=0);
+	void	linereq(int,Attrib=0);
 	void	create(long);
 public:
 	Pad	*pad;
@@ -19,7 +19,7 @@ public:
 };
 
 class Test : public PadRcv {
-	void	linereq(long,Attrib=0);
+	void	linereq(int,Attrib=0);
 public:
 	Pad	*pad;
 		Test();
@@ -119,7 +119,7 @@ Creator::Creator()
 	}
 }
 
-void Creator::linereq(long i, Attrib a)
+void Creator::linereq(int i, Attrib a)
 {
 	pad->insert(i, a, "line\t%d\t[]", i);
 }
@@ -143,7 +143,7 @@ void Journal::create(long i)
 		pad->createline(10);
 }
 
-void Journal::linereq(long i, Attrib a)
+void Journal::linereq(int i, Attrib a)
 {
 	pad->insert(i, a, "journal %d", i);
 }
@@ -157,7 +157,7 @@ void Journal::cycle()
 	pad->alarm(10);
 }
 
-void Test::linereq(long i, Attrib a)
+void Test::linereq(int i, Attrib a)
 {
 	Menu m;
 

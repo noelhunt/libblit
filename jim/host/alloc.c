@@ -1,4 +1,5 @@
 #include "jim.h"
+#include <unistd.h>
 /*
  *	Allocator.  Manages arena between initial bss and garbage-compacted
  *	arena.  Uses shiftgcarena() when it needs to expand its dominion.
@@ -67,7 +68,7 @@ char *alloc(ulong nbytes){
 		*q++=0;
 	return (char *)(p+HEADERSIZE);
 }
-void free(char *cp){
+void free(void *cp){
 	register long *p=(long *)cp;
 	if(p<=basep || nextp<=p)
 		panic("free");
@@ -78,4 +79,4 @@ void allocerr(){
 	error("allocation failure", (char *)0);
 }
 
-char *malloc(unsigned n){ return alloc((ulong)n); }	/* for libraries */
+void *malloc(unsigned n){ return alloc((ulong)n); }	/* for libraries */

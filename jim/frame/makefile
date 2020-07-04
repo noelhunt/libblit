@@ -1,4 +1,4 @@
-CFLAGS=-g -I../../libg
+CFLAGS=-g -I../../libblit
 CC=cc
 AR= /usr/ccs/bin/ar rcs
 FILES=deltext.o fralloc.o frameop.o instext.o ptofchar.o

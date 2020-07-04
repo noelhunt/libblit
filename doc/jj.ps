@@ -1,0 +1,1276 @@
+%!PS-Adobe-2.0
+%%Version: 0.1
+%%DocumentFonts: (atend)
+%%Pages: (atend)
+%%EndComments
+%
+% Version 3.3.2 prologue for troff files.
+%
+
+/#copies 1 store
+/aspectratio 1 def
+/formsperpage 1 def
+/landscape false def
+/linewidth .3 def
+/magnification 1 def
+/margin 0 def
+/orientation 0 def
+/resolution 720 def
+/rotation 1 def
+/xoffset 0 def
+/yoffset 0 def
+
+/roundpage true def
+/useclippath true def
+/pagebbox [0 0 612 792] def
+
+/R  /Times-Roman def
+/I  /Times-Italic def
+/B  /Times-Bold def
+/BI /Times-BoldItalic def
+/H  /Helvetica def
+/HI /Helvetica-Oblique def
+/HB /Helvetica-Bold def
+/HX /Helvetica-BoldOblique def
+/CW /Courier def
+/CO /Courier def
+/CI /Courier-Oblique def
+/CB /Courier-Bold def
+/CX /Courier-BoldOblique def
+/PA /Palatino-Roman def
+/PI /Palatino-Italic def
+/PB /Palatino-Bold def
+/PX /Palatino-BoldItalic def
+/Hr /Helvetica-Narrow def
+/Hi /Helvetica-Narrow-Oblique def
+/Hb /Helvetica-Narrow-Bold def
+/Hx /Helvetica-Narrow-BoldOblique def
+/KR /Bookman-Light def
+/KI /Bookman-LightItalic def
+/KB /Bookman-Demi def
+/KX /Bookman-DemiItalic def
+/AR /AvantGarde-Book def
+/AI /AvantGarde-BookOblique def
+/AB /AvantGarde-Demi def
+/AX /AvantGarde-DemiOblique def
+/NR /NewCenturySchlbk-Roman def
+/NI /NewCenturySchlbk-Italic def
+/NB /NewCenturySchlbk-Bold def
+/NX /NewCenturySchlbk-BoldItalic def
+/ZD /ZapfDingbats def
+/ZI /ZapfChancery-MediumItalic def
+/S  /S def
+/S1 /S1 def
+/GR /Symbol def
+
+/inch {72 mul} bind def
+/min {2 copy gt {exch} if pop} bind def
+
+/setup {
+	counttomark 2 idiv {def} repeat pop
+
+	landscape {/orientation 90 orientation add def} if
+	/scaling 72 resolution div def
+	linewidth setlinewidth
+	1 setlinecap
+
+	pagedimensions
+	xcenter ycenter translate
+	orientation rotation mul rotate
+	width 2 div neg height 2 div translate
+	xoffset inch yoffset inch neg translate
+	margin 2 div dup neg translate
+	magnification dup aspectratio mul scale
+	scaling scaling scale
+
+	addmetrics
+	0 0 moveto
+} def
+
+/pagedimensions {
+	useclippath userdict /gotpagebbox known not and {
+		/pagebbox [clippath pathbbox newpath] def
+		roundpage currentdict /roundpagebbox known and {roundpagebbox} if
+	} if
+	pagebbox aload pop
+	4 -1 roll exch 4 1 roll 4 copy
+	landscape {4 2 roll} if
+	sub /width exch def
+	sub /height exch def
+	add 2 div /xcenter exch def
+	add 2 div /ycenter exch def
+	userdict /gotpagebbox true put
+} def
+
+/addmetrics {
+	/Symbol /S null Sdefs cf
+	/Times-Roman /S1 StandardEncoding dup length array copy S1defs cf
+} def
+
+/pagesetup {
+	/page exch def
+	currentdict /pagedict known currentdict page known and {
+		page load pagedict exch get cvx exec
+	} if
+} def
+
+/decodingdefs [
+	{counttomark 2 idiv {y moveto show} repeat}
+	{neg /y exch def counttomark 2 idiv {y moveto show} repeat}
+	{neg moveto {2 index stringwidth pop sub exch div 0 32 4 -1 roll widthshow} repeat}
+	{neg moveto {spacewidth sub 0.0 32 4 -1 roll widthshow} repeat}
+	{counttomark 2 idiv {y moveto show} repeat}
+	{neg setfunnytext}
+] def
+
+/setdecoding {/t decodingdefs 3 -1 roll get bind def} bind def
+
+/w {neg moveto show} bind def
+/m {neg dup /y exch def moveto} bind def
+/done {/lastpage where {pop lastpage} if} def
+
+/f {
+	dup /font exch def findfont exch
+	dup /ptsize exch def scaling div dup /size exch def scalefont setfont
+	linewidth ptsize mul scaling 10 mul div setlinewidth
+	/spacewidth ( ) stringwidth pop def
+} bind def
+
+/changefont {
+	/fontheight exch def
+	/fontslant exch def
+	currentfont [
+		1 0
+		fontheight ptsize div fontslant sin mul fontslant cos div
+		fontheight ptsize div
+		0 0
+	] makefont setfont
+} bind def
+
+/sf {f} bind def
+
+/cf {
+	dup length 2 idiv
+	/entries exch def
+	/chtab exch def
+	/newencoding exch def
+	/newfont exch def
+
+	findfont dup length 1 add dict
+	/newdict exch def
+	{1 index /FID ne {newdict 3 1 roll put}{pop pop} ifelse} forall
+
+	newencoding type /arraytype eq {newdict /Encoding newencoding put} if
+
+	newdict /Metrics entries dict put
+	newdict /Metrics get
+	begin
+		chtab aload pop
+		1 1 entries {pop def} for
+		newfont newdict definefont pop
+	end
+} bind def
+
+%
+% A few arrays used to adjust reference points and character widths in some
+% of the printer resident fonts. If square roots are too high try changing
+% the lines describing /radical and /radicalex to,
+%
+%	/radical	[0 -75 550 0]
+%	/radicalex	[-50 -75 500 0]
+%
+% Move braceleftbt a bit - default PostScript character is off a bit.
+%
+
+/Sdefs [
+	/bracketlefttp		[201 500]
+	/bracketleftbt		[201 500]
+	/bracketrighttp		[-81 380]
+	/bracketrightbt		[-83 380]
+	/braceleftbt		[203 490]
+	/bracketrightex		[220 -125 500 0]
+	/radical		[0 0 550 0]
+	/radicalex		[-50 0 500 0]
+	/parenleftex		[-20 -170 0 0]
+	/integral		[100 -50 500 0]
+	/infinity		[10 -75 730 0]
+] def
+
+/S1defs [
+	/underscore		[0 80 500 0]
+	/endash			[7 90 650 0]
+] def
+%
+% Tries to round clipping path dimensions, as stored in array pagebbox, so they
+% match one of the known sizes in the papersizes array. Lower left coordinates
+% are always set to 0.
+%
+
+/roundpagebbox {
+    7 dict begin
+	/papersizes [8.5 inch 11 inch 14 inch 17 inch] def
+
+	/mappapersize {
+		/val exch def
+		/slop .5 inch def
+		/diff slop def
+		/j 0 def
+		0 1 papersizes length 1 sub {
+			/i exch def
+			papersizes i get val sub abs
+			dup diff le {/diff exch def /j i def} {pop} ifelse
+		} for
+		diff slop lt {papersizes j get} {val} ifelse
+	} def
+
+	pagebbox 0 0 put
+	pagebbox 1 0 put
+	pagebbox dup 2 get mappapersize 2 exch put
+	pagebbox dup 3 get mappapersize 3 exch put
+    end
+} bind def
+
+%%EndProlog
+%%BeginSetup
+mark
+%
+% Encoding vector and redefinition of findfont for the ISO Latin1 standard.
+% The 18 characters missing from ROM based fonts on older printers are noted
+% below.
+%
+
+/ISOLatin1Encoding [
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/space
+	/exclam
+	/quotedbl
+	/numbersign
+	/dollar
+	/percent
+	/ampersand
+	/quoteright
+	/parenleft
+	/parenright
+	/asterisk
+	/plus
+	/comma
+	/minus
+	/period
+	/slash
+	/zero
+	/one
+	/two
+	/three
+	/four
+	/five
+	/six
+	/seven
+	/eight
+	/nine
+	/colon
+	/semicolon
+	/less
+	/equal
+	/greater
+	/question
+	/at
+	/A
+	/B
+	/C
+	/D
+	/E
+	/F
+	/G
+	/H
+	/I
+	/J
+	/K
+	/L
+	/M
+	/N
+	/O
+	/P
+	/Q
+	/R
+	/S
+	/T
+	/U
+	/V
+	/W
+	/X
+	/Y
+	/Z
+	/bracketleft
+	/backslash
+	/bracketright
+	/asciicircum
+	/underscore
+	/quoteleft
+	/a
+	/b
+	/c
+	/d
+	/e
+	/f
+	/g
+	/h
+	/i
+	/j
+	/k
+	/l
+	/m
+	/n
+	/o
+	/p
+	/q
+	/r
+	/s
+	/t
+	/u
+	/v
+	/w
+	/x
+	/y
+	/z
+	/braceleft
+	/bar
+	/braceright
+	/asciitilde
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/.notdef
+	/dotlessi
+	/grave
+	/acute
+	/circumflex
+	/tilde
+	/macron
+	/breve
+	/dotaccent
+	/dieresis
+	/.notdef
+	/ring
+	/cedilla
+	/.notdef
+	/hungarumlaut
+	/ogonek
+	/caron
+	/space
+	/exclamdown
+	/cent
+	/sterling
+	/currency
+	/yen
+	/brokenbar		% missing
+	/section
+	/dieresis
+	/copyright
+	/ordfeminine
+	/guillemotleft
+	/logicalnot
+	/hyphen
+	/registered
+	/macron
+	/degree			% missing
+	/plusminus		% missing
+	/twosuperior		% missing
+	/threesuperior		% missing
+	/acute
+	/mu			% missing
+	/paragraph
+	/periodcentered
+	/cedilla
+	/onesuperior		% missing
+	/ordmasculine
+	/guillemotright
+	/onequarter		% missing
+	/onehalf		% missing
+	/threequarters		% missing
+	/questiondown
+	/Agrave
+	/Aacute
+	/Acircumflex
+	/Atilde
+	/Adieresis
+	/Aring
+	/AE
+	/Ccedilla
+	/Egrave
+	/Eacute
+	/Ecircumflex
+	/Edieresis
+	/Igrave
+	/Iacute
+	/Icircumflex
+	/Idieresis
+	/Eth			% missing
+	/Ntilde
+	/Ograve
+	/Oacute
+	/Ocircumflex
+	/Otilde
+	/Odieresis
+	/multiply		% missing
+	/Oslash
+	/Ugrave
+	/Uacute
+	/Ucircumflex
+	/Udieresis
+	/Yacute			% missing
+	/Thorn			% missing
+	/germandbls
+	/agrave
+	/aacute
+	/acircumflex
+	/atilde
+	/adieresis
+	/aring
+	/ae
+	/ccedilla
+	/egrave
+	/eacute
+	/ecircumflex
+	/edieresis
+	/igrave
+	/iacute
+	/icircumflex
+	/idieresis
+	/eth			% missing
+	/ntilde
+	/ograve
+	/oacute
+	/ocircumflex
+	/otilde
+	/odieresis
+	/divide			% missing
+	/oslash
+	/ugrave
+	/uacute
+	/ucircumflex
+	/udieresis
+	/yacute			% missing
+	/thorn			% missing
+	/ydieresis
+] def
+
+/NewFontDirectory FontDirectory maxlength dict def
+
+%
+% Apparently no guarantee findfont is defined in systemdict so the obvious
+%
+%	systemdict /findfont get exec
+%
+% can generate an error. So far the only exception is a VT600 (version 48.0).
+%
+
+userdict /@RealFindfont known not {
+	userdict begin
+		/@RealFindfont systemdict begin /findfont load end def
+	end
+} if
+
+/findfont {
+	dup NewFontDirectory exch known not {
+		dup
+		%dup systemdict /findfont get exec	% not always in systemdict
+		dup userdict /@RealFindfont get exec
+		dup /Encoding get StandardEncoding eq {
+			dup length dict begin
+				{1 index /FID ne {def}{pop pop} ifelse} forall
+				/Encoding ISOLatin1Encoding def
+				currentdict
+			end
+			/DummyFontName exch definefont
+		} if
+		NewFontDirectory 3 1 roll put
+	} if
+	NewFontDirectory exch get
+} bind def
+
+setup
+%%EndSetup
+%%Page: 1 1
+/saveobj save def
+mark
+1 pagesetup
+10 /Times-Bold f
+(A Library of Goo for the 5620) 720 840 w
+10 /Times-Roman f
+(In) 970 996 w
+(the) 1108 996 w
+(following) 1285 996 w
+(summaries,) 1729 996 w
+(all) 2242 996 w
+(coordinates) 2398 996 w
+(are) 2914 996 w
+(screen) 3091 996 w
+(or) 3401 996 w
+(bitmap) 3540 996 w
+(coordinates.) 3874 996 w
+(The) 4440 996 w
+(library) 4651 996 w
+(is) 4973 996 w
+10 /Courier f
+(/usr/jerq/lib/libjj.a) 720 1116 w
+10 /Times-Roman f
+(which can be accessed by including a) 2005 1116 w
+10 /Courier f
+(\255ljj) 3526 1116 w
+10 /Times-Roman f
+(in your compilation.) 3791 1116 w
+12 /S f
+(\347) 720 1512 w
+12 /Courier f
+(3d) 740 1512 w
+12 /S f
+(\347) 904 1512 w
+(`) 720 1512 w
+(```) 724 1512 w
+(_) 720 1512 w
+(___) 724 1512 w
+10 /Times-Roman f
+(3d: scaled integer three dimensional geometry) 1329 1512 w
+10 /Courier f
+(#define) 1020 1752 w
+(ONE) 1520 1752 w
+(16384) 1770 1752 w
+(#define) 1020 1872 w
+(XAXIS) 1520 1872 w
+(0) 2020 1872 w
+(#define) 1020 1992 w
+(YAXIS) 1520 1992 w
+(1) 2020 1992 w
+(#define) 1020 2112 w
+(ZAXIS) 1520 2112 w
+(2) 2020 2112 w
+(typedef short fract;) 1020 2232 w
+(/* fixed point scaled by ONE */) 2270 2232 w
+(typedef fract matrix[4][4];) 1020 2352 w
+(typedef short coord[4];) 1020 2472 w
+(typedef struct point3) 1020 2592 w
+({) 1020 2712 w
+(fract x, y, z, w;) 1270 2832 w
+(} Hcoord;) 1020 2952 w
+10 /Times-Roman f
+(These) 1020 3192 w
+(are) 1296 3192 w
+(the) 1455 3192 w
+(data) 1615 3192 w
+(structures) 1819 3192 w
+(for) 2245 3192 w
+(a) 2399 3192 w
+(3) 2481 3192 w
+(dimensional) 2569 3192 w
+(geometry) 3096 3192 w
+(package.) 3511 3192 w
+10 /Courier f
+(Hcoord) 3926 3192 w
+10 /Times-Roman f
+(are) 4325 3192 w
+(homogeneous) 4485 3192 w
+(coordinates.) 1020 3312 w
+(Author \(for all the 3d stuff\): Tom Duff.) 1555 3312 w
+12 /S f
+(\347) 720 3552 w
+12 /Courier f
+(Clip) 740 3552 w
+12 /S f
+(\347) 1048 3552 w
+(`) 720 3552 w
+(`````) 748 3552 w
+(_) 720 3552 w
+(_____) 748 3552 w
+10 /Times-Roman f
+(Clip: clipped jerq primitives) 1473 3552 w
+10 /Courier f
+(Clip\(r\) Rectangle r;) 1020 3792 w
+(Cbitblt\(sb, sr, db, dp, fc\) Bitmap *sb, *db; Rectangle sr; Point dp;) 1020 3912 w
+(Crectf\(bp, r, fc\) Bitmap *bp; Rectangle r;) 1020 4032 w
+(Point Cstring\(f, s, bp, p, fc\) Font *f; char *s; Bitmap *bp; Point p;) 1020 4152 w
+(Ctexture\(bp, r, t, fc\) Bitmap *bp; Rectangle r; Texture *t;) 1020 4272 w
+(Clip) 1020 4512 w
+10 /Times-Roman f
+(sets) 1289 4512 w
+(the) 1468 4512 w
+(clipping) 1619 4512 w
+(rectangle) 1976 4512 w
+(for) 2371 4512 w
+(the) 2517 4512 w
+(routines) 2669 4512 w
+10 /Courier f
+(Cbitblt) 3021 4512 w
+10 /Times-Roman f
+(,) 3441 4512 w
+10 /Courier f
+(Crectf) 3496 4512 w
+10 /Times-Roman f
+(,) 3856 4512 w
+10 /Courier f
+(Cstring) 3911 4512 w
+10 /Times-Roman f
+(and) 4361 4512 w
+10 /Courier f
+(Ctexture) 4535 4512 w
+10 /Times-Roman f
+(.) 5015 4512 w
+(These) 1020 4632 w
+(routines) 1292 4632 w
+(implicitly) 1648 4632 w
+(clip) 2072 4632 w
+(to) 2256 4632 w
+(the) 2368 4632 w
+(layer) 2524 4632 w
+(as) 2757 4632 w
+(well.) 2873 4632 w
+10 /Courier f
+(Cstring) 3128 4632 w
+10 /Times-Roman f
+(returns) 3581 4632 w
+(the) 3891 4632 w
+(same) 4046 4632 w
+(result) 4284 4632 w
+(as) 4539 4632 w
+10 /Courier f
+(string) 4655 4632 w
+10 /Times-Roman f
+(,) 5015 4632 w
+(that is, the result is not clipped.) 1020 4752 w
+(Author: Andrew Hume.) 2320 4752 w
+12 /S f
+(\347) 720 4992 w
+12 /Courier f
+(NMenu) 740 4992 w
+12 /S f
+(\347) 1120 4992 w
+(`) 720 4992 w
+(``````) 760 4992 w
+(_) 720 4992 w
+(______) 760 4992 w
+10 /Times-Roman f
+(NMenu: extended menu) 1545 4992 w
+10 /Courier f
+(typedef struct NMitem {) 1020 5232 w
+(char) 1270 5352 w
+(*text;) 1520 5352 w
+(/* text in menu */) 2270 5352 w
+(char) 1270 5472 w
+(*help;) 1520 5472 w
+(/* optional help text */) 2270 5472 w
+(struct NMenu *next;) 1270 5592 w
+(/* cascade to */) 2520 5592 w
+(void) 1270 5712 w
+(\(*dfn\)\(\), \(*bfn\)\(\), \(*hfn\)\(\);) 1520 5712 w
+(} NMitem;) 1020 5832 w
+(typedef struct NMenu {) 1020 5952 w
+(NMitem) 1270 6072 w
+(*item;) 1770 6072 w
+(/* string array, ending with text=0 */) 2770 6072 w
+(NMitem) 1270 6192 w
+(*\(*generator\)\(\);) 1770 6192 w
+(/* used if item == 0 */) 2770 6192 w
+(/* and some other private data */) 1270 6312 w
+(} NMenu;) 1020 6432 w
+10 /Times-Roman f
+(A) 1020 6672 w
+10 /Courier f
+(NMenu) 1121 6672 w
+10 /Times-Roman f
+(is) 1450 6672 w
+(used) 1546 6672 w
+(by) 1758 6672 w
+10 /Courier f
+(mhit) 1887 6672 w
+10 /Times-Roman f
+(described) 2156 6672 w
+(below.) 2567 6672 w
+(Null) 2890 6672 w
+(or) 3097 6672 w
+(missing) 3209 6672 w
+(values) 3550 6672 w
+(should) 3834 6672 w
+(be) 4130 6672 w
+(zero.) 4253 6672 w
+(The) 4503 6672 w
+(help) 4688 6672 w
+(text) 4890 6672 w
+(should) 1020 6792 w
+(be) 1318 6792 w
+(less) 1443 6792 w
+(than) 1624 6792 w
+(40) 1827 6792 w
+(characters) 1958 6792 w
+(or) 2392 6792 w
+(so.) 2506 6792 w
+(The) 2676 6792 w
+(generator) 2862 6792 w
+(function) 3269 6792 w
+(is) 3633 6792 w
+(called) 3731 6792 w
+(with) 3999 6792 w
+(an) 4207 6792 w
+(integer) 4331 6792 w
+(argument.) 4638 6792 w
+(The) 1020 6912 w
+(end) 1205 6912 w
+(of) 1379 6912 w
+(the) 1492 6912 w
+(menu) 1644 6912 w
+(is) 1896 6912 w
+(indicated) 1993 6912 w
+(by) 2389 6912 w
+(a) 2519 6912 w
+(zero) 2593 6912 w
+10 /Courier f
+(text) 2794 6912 w
+10 /Times-Roman f
+(field.) 3065 6912 w
+(The) 3329 6912 w
+(function) 3515 6912 w
+10 /Courier f
+(dfn) 3879 6912 w
+10 /Times-Roman f
+(is) 4090 6912 w
+(called) 4188 6912 w
+(just) 4457 6912 w
+(before) 4633 6912 w
+(the) 4918 6912 w
+(new) 1020 7032 w
+(menu) 1224 7032 w
+(is) 1484 7032 w
+(invoked.) 1589 7032 w
+(The) 1999 7032 w
+(function) 2192 7032 w
+10 /Courier f
+(bfn) 2563 7032 w
+10 /Times-Roman f
+(is) 2781 7032 w
+(called) 2885 7032 w
+(just) 3160 7032 w
+(after) 3342 7032 w
+(this) 3561 7032 w
+(menu) 3743 7032 w
+(is) 4002 7032 w
+(finished.) 4106 7032 w
+(The) 4515 7032 w
+(function) 4707 7032 w
+10 /Courier f
+(hfn) 1020 7152 w
+10 /Times-Roman f
+(is) 1229 7152 w
+(invoked) 1325 7152 w
+(just) 1676 7152 w
+(after) 1850 7152 w
+(the) 2061 7152 w
+(selection) 2212 7152 w
+(is) 2596 7152 w
+(made) 2692 7152 w
+(and) 2937 7152 w
+(before) 3110 7152 w
+10 /Courier f
+(bfn) 3394 7152 w
+10 /Times-Roman f
+(.) 3574 7152 w
+(All) 3654 7152 w
+(three) 3812 7152 w
+(functions) 4041 7152 w
+(are) 4443 7152 w
+(called) 4594 7152 w
+(with) 4862 7152 w
+(one) 1020 7272 w
+(argument,) 1192 7272 w
+(a) 1622 7272 w
+(pointer) 1694 7272 w
+(to) 2005 7272 w
+(the) 2111 7272 w
+10 /Courier f
+(NMitem) 2261 7272 w
+10 /Times-Roman f
+(concerned.) 2649 7272 w
+10 /Courier f
+(Mhit) 3136 7272 w
+10 /Times-Roman f
+(returns) 3403 7272 w
+(a) 3707 7272 w
+(pointer) 3778 7272 w
+(to) 4088 7272 w
+(the) 4193 7272 w
+(NMitem) 4342 7272 w
+(that) 4708 7272 w
+(was) 4885 7272 w
+cleartomark
+showpage
+saveobj restore
+%%EndPage: 1 1
+%%Page: 2 2
+/saveobj save def
+mark
+2 pagesetup
+10 /Times-Roman f
+(\255 2 \255) 2797 480 w
+(selected) 1020 840 w
+(or) 1551 840 w
+10 /Courier f
+(\(NMitem) 1844 840 w
+10 /Times-Roman f
+(*\)0) 2264 840 w
+(The) 2607 840 w
+(above) 2972 840 w
+(definitions) 3420 840 w
+(are) 4059 840 w
+(available) 4391 840 w
+(in) 4962 840 w
+10 /Courier f
+(/usr/jerq/include/menu.h) 1020 960 w
+10 /Times-Roman f
+(.) 2460 960 w
+12 /S f
+(\347) 720 1200 w
+12 /Courier f
+(confirm) 740 1200 w
+12 /S f
+(\347) 1264 1200 w
+(`) 720 1200 w
+(`````````) 724 1200 w
+(_) 720 1200 w
+(_________) 724 1200 w
+10 /Times-Roman f
+(confirm: confirm a decision) 1689 1200 w
+10 /Courier f
+(confirm\(but\)) 1020 1440 w
+(confirm) 1020 1680 w
+10 /Times-Roman f
+(waits) 1466 1680 w
+(for) 1703 1680 w
+(all) 1845 1680 w
+(buttons) 1971 1680 w
+(to) 2292 1680 w
+(be) 2396 1680 w
+(released,) 2516 1680 w
+(changes) 2893 1680 w
+(the) 3240 1680 w
+(cursor) 3388 1680 w
+(to) 3663 1680 w
+(an) 3767 1680 w
+(icon) 3887 1680 w
+(indicating) 4086 1680 w
+(which) 4513 1680 w
+(button) 4784 1680 w
+(to) 1020 1800 w
+(push) 1126 1800 w
+(for) 1343 1800 w
+(an) 1487 1800 w
+(affirmative) 1609 1800 w
+(reponse,) 2080 1800 w
+(waits) 2443 1800 w
+(for) 2682 1800 w
+(a) 2826 1800 w
+(button) 2898 1800 w
+(push) 3182 1800 w
+(and) 3398 1800 w
+(returns) 3569 1800 w
+(the) 3873 1800 w
+(equality) 4022 1800 w
+(between) 4371 1800 w
+(the) 4730 1800 w
+(but\255) 4879 1800 w
+(ton push and the argument) 1020 1920 w
+10 /Courier f
+(but) 2105 1920 w
+10 /Times-Roman f
+(.) 2285 1920 w
+(Author: Adrian Freed.) 2360 1920 w
+12 /S f
+(\347) 720 2160 w
+12 /Courier f
+(icos) 740 2160 w
+12 /S f
+(\347) 1048 2160 w
+(`) 720 2160 w
+(`````) 748 2160 w
+(_) 720 2160 w
+(_____) 748 2160 w
+10 /Times-Roman f
+(icos, isin, isqrt: accurate scaled functions) 1473 2160 w
+10 /Courier f
+(fract icos\(x\) angle\(x\);) 1020 2400 w
+(fract isin\(x\) angle x;) 1020 2520 w
+(long isqrt\(x\) long x;) 1020 2640 w
+(icos) 1020 2880 w
+10 /Times-Roman f
+(and) 1285 2880 w
+10 /Courier f
+(isin) 1454 2880 w
+10 /Times-Roman f
+(return a scaled value of their \(scaled\) argument.) 1719 2880 w
+(See) 3674 2880 w
+10 /Courier f
+(3d) 3843 2880 w
+10 /Times-Roman f
+(above.) 3988 2880 w
+12 /S f
+(\347) 720 3120 w
+12 /Courier f
+(init3) 740 3120 w
+12 /S f
+(\347) 1120 3120 w
+(`) 720 3120 w
+(``````) 760 3120 w
+(_) 720 3120 w
+(______) 760 3120 w
+10 /Times-Roman f
+(init3: initialise the 3d geometry world) 1545 3120 w
+10 /Courier f
+(init3\(v, d, s\) Bitmap *v;) 1020 3360 w
+(init3) 1020 3600 w
+10 /Times-Roman f
+(initialises) 1352 3600 w
+(the) 1768 3600 w
+(matrix) 1922 3600 w
+(stack) 2215 3600 w
+(\(see) 2452 3600 w
+10 /Courier f
+(push3) 2644 3600 w
+10 /Times-Roman f
+(below\).) 2944 3600 w
+10 /Courier f
+(v) 3303 3600 w
+10 /Times-Roman f
+(is) 3395 3600 w
+(the) 3494 3600 w
+(Bitmap) 3648 3600 w
+(for) 3975 3600 w
+(the) 4123 3600 w
+(image.) 4278 3600 w
+10 /Courier f
+(d/s) 4605 3600 w
+10 /Times-Roman f
+(is) 4818 3600 w
+(the) 4918 3600 w
+(distance to the screen whose half\255width is 1.) 1020 3720 w
+12 /S f
+(\347) 720 3960 w
+12 /Courier f
+(kbdstr) 740 3960 w
+12 /S f
+(\347) 1192 3960 w
+(`) 720 3960 w
+(```````) 772 3960 w
+(_) 720 3960 w
+(_______) 772 3960 w
+10 /Times-Roman f
+(kbdstr: enter a string from the keyboard) 1617 3960 w
+10 /Courier f
+(kbdstr\(s\) char *s;) 1020 4200 w
+(kbdstr) 1020 4440 w
+10 /Times-Roman f
+(displays) 1421 4440 w
+(the) 1790 4440 w
+(given) 1953 4440 w
+(text) 2216 4440 w
+(in) 2408 4440 w
+(a) 2528 4440 w
+(box) 2614 4440 w
+(300) 2806 4440 w
+(pixels) 2998 4440 w
+(long) 3279 4440 w
+(and) 3499 4440 w
+(allows) 3685 4440 w
+(the) 3988 4440 w
+(user) 4152 4440 w
+(to) 4360 4440 w
+(type) 4480 4440 w
+(after) 4694 4440 w
+(the) 4918 4440 w
+(prompt.) 1020 4560 w
+(The erase and kill characters are) 1384 4560 w
+10 /Courier f
+(BS) 2695 4560 w
+10 /Times-Roman f
+(and) 2840 4560 w
+10 /Courier f
+(@) 3009 4560 w
+10 /Times-Roman f
+(respectively.) 3094 4560 w
+(Author: Andrew Hume.) 3651 4560 w
+12 /S f
+(\347) 720 4800 w
+12 /Courier f
+(mhit) 740 4800 w
+12 /S f
+(\347) 1048 4800 w
+(`) 720 4800 w
+(`````) 748 4800 w
+(_) 720 4800 w
+(_____) 748 4800 w
+10 /Times-Roman f
+(mhit: extended analog to menuhit) 1473 4800 w
+10 /Courier f
+(NMitem *mhit\(m, but, 0\) NMenu *m;) 1020 5040 w
+(mhit) 1020 5280 w
+10 /Times-Roman f
+(supports) 1290 5280 w
+(cascading) 1659 5280 w
+(menus) 2082 5280 w
+(with) 2373 5280 w
+(help.) 2581 5280 w
+(Menus) 2833 5280 w
+(may) 3135 5280 w
+(be) 3337 5280 w
+(a) 3461 5280 w
+(static) 3535 5280 w
+(list) 3776 5280 w
+(of) 3929 5280 w
+10 /Courier f
+(MNitem) 4042 5280 w
+10 /Times-Roman f
+(or) 4432 5280 w
+(a) 4545 5280 w
+(generating) 4619 5280 w
+(function.) 1020 5400 w
+10 /Courier f
+(mhit) 1441 5400 w
+10 /Times-Roman f
+(may) 1718 5400 w
+(be) 1927 5400 w
+(called) 2058 5400 w
+(with) 2333 5400 w
+(a) 2548 5400 w
+(button) 2629 5400 w
+(argument) 2922 5400 w
+(of) 3336 5400 w
+(2) 3456 5400 w
+(or) 3543 5400 w
+(3) 3663 5400 w
+(only.) 3750 5400 w
+(Button) 4015 5400 w
+(1) 4325 5400 w
+(causes) 4412 5400 w
+(the) 4709 5400 w
+(help) 4868 5400 w
+(message) 1020 5520 w
+(associated) 1386 5520 w
+(with) 1824 5520 w
+(the) 2030 5520 w
+(currently) 2181 5520 w
+(highlighted) 2570 5520 w
+(entry) 3055 5520 w
+(to) 3289 5520 w
+(be) 3396 5520 w
+(displayed.) 3519 5520 w
+(The) 3981 5520 w
+(menu) 4165 5520 w
+(items) 4416 5520 w
+(\(and) 4662 5520 w
+(help) 4868 5520 w
+(messages\) scroll.) 1020 5640 w
+(Author: Andrew Hume.) 1752 5640 w
+12 /S f
+(\347) 720 5880 w
+12 /Courier f
+(polyture) 740 5880 w
+12 /S f
+(\347) 1336 5880 w
+(`) 720 5880 w
+(``````````) 736 5880 w
+(_) 720 5880 w
+(__________) 736 5880 w
+10 /Times-Roman f
+(polyture: texture a polygon) 1761 5880 w
+10 /Courier f
+(polyture\(bp, pts, n, t, c\) Bitmap *bp; Point *pts; Texture *t; Code c;) 1020 6120 w
+(Polyture) 1020 6360 w
+10 /Times-Roman f
+(textures) 1526 6360 w
+(with) 1868 6360 w
+(mode) 2072 6360 w
+10 /Courier f
+(c) 2320 6360 w
+10 /Times-Roman f
+(the) 2406 6360 w
+(polygon) 2554 6360 w
+(bounded) 2908 6360 w
+(by) 3278 6360 w
+(and) 3404 6360 w
+(including) 3575 6360 w
+(the) 3980 6360 w
+10 /Courier f
+(n) 4129 6360 w
+10 /Times-Roman f
+(vertices) 4216 6360 w
+(specified) 4553 6360 w
+(by) 4940 6360 w
+10 /Courier f
+(pts) 1020 6480 w
+10 /Times-Roman f
+(.) 1200 6480 w
+(The list should be closed, i.e.) 1275 6480 w
+10 /Courier f
+(pts[0]==pts[n\2551]) 2491 6480 w
+10 /Times-Roman f
+(.) 3451 6480 w
+(Author: Andrew Hume.) 3526 6480 w
+12 /S f
+(\347) 720 6720 w
+12 /Courier f
+(push3) 740 6720 w
+12 /S f
+(\347) 1120 6720 w
+(`) 720 6720 w
+(``````) 760 6720 w
+(_) 720 6720 w
+(______) 760 6720 w
+10 /Times-Roman f
+(push3, pop3: manipulate the 3d matrix stack) 1545 6720 w
+10 /Courier f
+(push3\(\)) 1020 6960 w
+(pop\(\)) 1020 7080 w
+cleartomark
+showpage
+saveobj restore
+%%EndPage: 2 2
+%%Page: 3 3
+/saveobj save def
+mark
+3 pagesetup
+10 /Times-Roman f
+(\255 3 \255) 2797 480 w
+10 /Courier f
+(push3) 1020 840 w
+10 /Times-Roman f
+(pushes) 1350 840 w
+(a) 1652 840 w
+(copy) 1726 840 w
+(of) 1950 840 w
+(the) 2063 840 w
+(top) 2215 840 w
+(of) 2373 840 w
+(the) 2486 840 w
+(matrix) 2638 840 w
+(stack) 2929 840 w
+(onto) 3164 840 w
+(the) 3372 840 w
+(matrix) 3525 840 w
+(stack.) 3817 840 w
+10 /Courier f
+(pop3) 4103 840 w
+10 /Times-Roman f
+(throws) 4374 840 w
+(away) 4677 840 w
+(the) 4918 840 w
+(top of the matrix stack.) 1020 960 w
+12 /S f
+(\347) 720 1200 w
+12 /Courier f
+(rot3) 740 1200 w
+12 /S f
+(\347) 1048 1200 w
+(`) 720 1200 w
+(`````) 748 1200 w
+(_) 720 1200 w
+(_____) 748 1200 w
+10 /Times-Roman f
+(rot3, rosc3: rotate a matrix) 1473 1200 w
+10 /Courier f
+(rot3\(theta, axis\) angle theta;) 1020 1440 w
+(rotsc3\(s, c, axis\) short s, c;) 1020 1560 w
+10 /Times-Roman f
+(These) 1020 1800 w
+(routines) 1287 1800 w
+(rotate) 1638 1800 w
+(the) 1894 1800 w
+(top) 2045 1800 w
+(of) 2202 1800 w
+(the) 2314 1800 w
+(matrix) 2465 1800 w
+(stack) 2755 1800 w
+(about) 2989 1800 w
+(the) 3240 1800 w
+(specified) 3391 1800 w
+(axis.) 3780 1800 w
+10 /Courier f
+(rot3\(theta, axis\)) 4020 1800 w
+10 /Times-Roman f
+(is identical to) 1020 1920 w
+10 /Courier f
+(rotsc3\(isin\(theta\), icos\(theta\), axis\)) 1584 1920 w
+10 /Times-Roman f
+(.) 3864 1920 w
+12 /S f
+(\347) 720 2160 w
+12 /Courier f
+(todo) 740 2160 w
+12 /S f
+(\347) 1048 2160 w
+(`) 720 2160 w
+(`````) 748 2160 w
+(_) 720 2160 w
+(_____) 748 2160 w
+10 /Times-Roman f
+(3d stuff to be done) 1473 2160 w
+10 /Courier f
+(Hcoord hcoord\(x,y,z,w\) fract x, y, z, w;) 1020 2400 w
+(scale3\(p\) Hcoord p;) 1020 2520 w
+(tran3\(p\) Hcoord p;) 1020 2640 w
+(ident\(m\) matrix m;) 1020 2760 w
+(xform3\(m\) matrix m;) 1020 2880 w
+(long dot\(a, b\) Hcoord a, b;) 1020 3000 w
+(Hcoord unitize\(x\) Hcoord\(x\);) 1020 3120 w
+(Hcoord cross\(a, b\) Hcoord a, b;) 1020 3240 w
+(look3\(e, l, u\) Hcoord e, l, u;) 1020 3360 w
+(move3\(p\) Hcoord p;) 1020 3480 w
+(line3\(p\) Hcoord p;) 1020 3600 w
+10 /Times-Roman f
+(These have yet to be documented.) 1020 3840 w
+cleartomark
+showpage
+saveobj restore
+%%EndPage: 3 3
+%%Trailer
+done
+%%DocumentFonts: Times-Roman Times-Bold Courier S
+%%Pages: 3

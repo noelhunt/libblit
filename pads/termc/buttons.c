@@ -1,7 +1,7 @@
 #include "univ.h"
 
 extern Script ObjScript;
-Script Generic;
+Script Generic = { 0 };
 Index CIndex;
 
 Entry *ObjectEntry(int i){
@@ -149,11 +149,9 @@ void MOUSEServe(){
 Again:
 	switch( butts ){
 	case BUTT1:
-		dprint(0, "MOUSEServe 1 mouse.buttons.%d", mouse.buttons);
 		Pointing();
 		if( !button23() ) goto AllDone;
 		while( button1() ) nap(2);
-		dprint(0, "MOUSEServe 2 mouse.buttons.%d", mouse.buttons);
 		goto Again;
 	case BUTT2:
 		but = 2;
@@ -175,16 +173,6 @@ Again:
 		but = 3;
 	case BUTT2:
 		ObjScript.cindex = 0;
-#ifdef ZEROHIT
-		dprint(0, "ObjScript.prevtop.%d ObjScript.prevhit.%d",
-			ObjScript.prevtop, ObjScript.prevhit);
-		if( lop ) dprint(0, "lop->ptop.%d lop->phit.%d", lop->ptop, lop->phit);
-		ObjScript.prevtop = 0;
-		ObjScript.prevhit = 0;
-		dprint(0, "ObjScript.lasthit.%d", ObjScript.lasthit);
-		if( lop ) dprint(0, "lop->lasthit.%d", lop->lasthit);
-		ObjScript.lasthit = 0;
-#endif
 		if( lop ){
 			if( lop->ptop != 255 ){
 				ObjScript.prevtop = lop->ptop;

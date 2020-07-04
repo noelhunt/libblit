@@ -14,10 +14,10 @@ Allocator NewDel;
 
 Allocator::Allocator(){}
 
-char *Allocator::profile(long u){
+char *Allocator::profile(int u){
 	char *s = literal;
 	static char report[64];
-	long p = event[u][POOL], a = event[u][ALLOC], f = event[u][FREE];
+	int p = event[u][POOL], a = event[u][ALLOC], f = event[u][FREE];
 
 	if( u >= A_LARGE ) return 0;
 	if( !(p|a|f) ) return s;
@@ -61,7 +61,7 @@ void *Allocator::alloc(size_t u){
 void Allocator::free(void *v){
 	void free(M*);
 	M* m = (M*) v;
-	long u;
+	int u;
 
 	--m;
 	if( (m->size&0xFF000000) != A_USER ) PadsError( "delete error" );

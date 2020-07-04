@@ -21,7 +21,9 @@ void setrects(Frame *t, Rectangle r, int m){
 	setcpl(t, 0, t->nlines-1);
 }
 void frinit(Frame *t){
+#ifdef BOX
 	box(t);
+#endif
 	strzero(&t->str);
 	t->s1=t->s2=0;
 	setcpl(t, 0, t->nlines-1);

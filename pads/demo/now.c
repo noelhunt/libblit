@@ -25,7 +25,7 @@ void Date::date(){
 	pad->insert( 1, "%s", ctime(&t) );
 }
 
-int main(){
+int main(int argc, char *argv[]){
 	const char *error = PadsInit(PADSTERM);
 	if( error ){
 		fprintf( stderr, "%s", error );

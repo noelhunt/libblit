@@ -9,13 +9,13 @@ class Allocator {
 		M    *link;
 	};
 	M	*freelist[A_LARGE];
-	long	req[A_LARGE];
-	long	event[A_LARGE][EVENT];
+	int	req[A_LARGE];
+	int	event[A_LARGE][EVENT];
 public:
 		Allocator();
 	void	*alloc(size_t);
 	void	free(void*);
-	char	*profile(long);
+	char	*profile(int);
 };
 
 extern Allocator NewDel;

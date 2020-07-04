@@ -2,10 +2,12 @@ BINDIR= $(HOME)/bin
 INSTALL= /usr/gnu/bin/install
 OFILES= buttons.o cache.o cursor.o host.o lib.o lineops.o \
 	master.o pad.o paint.o protocol.o scripthit.o
+MACH	= -m32
 LIBDIR = ../../libblit
 INCLUDE = -I.. -I$(LIBDIR)
-CFLAGS= -g -c -xCC $(INCLUDE) $(DEFS)
-LDFLAGS= -g
+CFLAGS= -g -c -xCC $(MACH) $(INCLUDE) $(DEFS)
+LDFLAGS= -g $(MACH)
+
 
 LIB = $(LIBDIR)/libblit.a
 LDLIBS= $(LIB) -lX11

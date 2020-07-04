@@ -23,7 +23,8 @@
 /* Common */
 GC		gc;
 Display		*_dpy;
-Visual		*visual;
+Visual		*_vis;
+Colormap	_cmap;
 Rectangle	Drect;
 Bitmap		screen, Jfscreen;
 Point		Joffset;
@@ -39,7 +40,6 @@ int		curStack = 0;
 Cursor		*curSave  = 0;
 Cursor		normalcursor;
 Cursor		nocursor;
-Colormap	cmap;
 static int	Jlocklevel;
 static int	hintwidth, hintheight, hintflags;
 
@@ -103,6 +103,7 @@ void initdisplay(int argc, char *argv[]){
 	Rectangle r;
 	int log2(int);
 
+	P = &sP;
 	if(!(_dpy= XOpenDisplay(NULL))){
 		perror("Cannot open screen\n");
 		exit(-1);
@@ -117,10 +118,10 @@ void initdisplay(int argc, char *argv[]){
 	depth =	DefaultDepth(_dpy, rootid);
 	defscreen = DefaultScreen(_dpy);
 	xscreen = DefaultScreenOfDisplay(_dpy);
-	cmap = XDefaultColormap(_dpy, DefaultScreen(_dpy));
+	_cmap = XDefaultColormap(_dpy, DefaultScreen(_dpy));
 	_fgpixel = BlackPixel(_dpy, defscreen);
 	_bgpixel = WhitePixel(_dpy, defscreen);
-	visual = DefaultVisual(_dpy, DefaultScreen(_dpy));
+	_vis = DefaultVisual(_dpy, DefaultScreen(_dpy));
 
 	ap = argv;
 	i = argc;
@@ -172,7 +173,6 @@ void initdisplay(int argc, char *argv[]){
 	else
 		defont = getfont("8x13");
 
-	P = &sP;
 	font = &defont;
 	sizehints.width_inc = sizehints.height_inc = 1;
 	sizehints.min_width = sizehints.min_height = 20;
@@ -193,22 +193,22 @@ void initdisplay(int argc, char *argv[]){
 	}
 	if (fgcname || bgcname) {
 		if (DefaultDepth(_dpy, DefaultScreen(_dpy)) != 1 &&
-		    (visual->class == PseudoColor || visual->class == GrayScale)) {
+		    (_vis->class == PseudoColor || _vis->class == GrayScale)) {
 			if (!fgcname) fgcname = "black";
 			if (!bgcname) bgcname = "white";
-			if (!XAllocColorCells(_dpy,cmap,False,&planes,1,&_bgpixel,1)) {
+			if (!XAllocColorCells(_dpy,_cmap,False,&planes,1,&_bgpixel,1)) {
 				perror("Cannot alloc color cells\n");
 				exit(1);
 			}
 			_fgpixel = _bgpixel | planes;
-			XStoreNamedColor(_dpy,cmap,fgcname,_fgpixel,DoRed|DoGreen|DoBlue);
-			XStoreNamedColor(_dpy,cmap,bgcname,_bgpixel,DoRed|DoGreen|DoBlue);
+			XStoreNamedColor(_dpy,_cmap,fgcname,_fgpixel,DoRed|DoGreen|DoBlue);
+			XStoreNamedColor(_dpy,_cmap,bgcname,_bgpixel,DoRed|DoGreen|DoBlue);
 		} else {
 			if (fgcname
-			&& XAllocNamedColor(_dpy,cmap,fgcname,&ccolor,&tcolor))
+			&& XAllocNamedColor(_dpy,_cmap,fgcname,&ccolor,&tcolor))
 				_fgpixel = ccolor.pixel;
 			if (bgcname
-			&& XAllocNamedColor(_dpy,cmap,bgcname,&ccolor,&tcolor))
+			&& XAllocNamedColor(_dpy,_cmap,bgcname,&ccolor,&tcolor))
 				_bgpixel = ccolor.pixel;
 		}
 	}
@@ -231,7 +231,7 @@ void initdisplay(int argc, char *argv[]){
 		0,					/* border width */
 		depth,					/* depth */
 		InputOutput,				/* class */
-		visual,					/* visual */
+		_vis,					/* _vis */
 							/* valuemask */
 		CWEventMask|CWBackPixel|CWBorderPixel|CWColormap,
 		&xswa					/* attributes */
@@ -246,9 +246,9 @@ void initdisplay(int argc, char *argv[]){
 	xwmhints.flags = InputHint;
 	XSetWMHints(_dpy, screen.id, &xwmhints);
 	_fgcolor.pixel = _fgpixel;
-	XQueryColor(_dpy, cmap, &_fgcolor);
+	XQueryColor(_dpy, _cmap, &_fgcolor);
 	_bgcolor.pixel = _bgpixel;
-	XQueryColor(_dpy, cmap, &_bgcolor);
+	XQueryColor(_dpy, _cmap, &_bgcolor);
 	gc = XDefaultGC(_dpy, DefaultScreen(_dpy));
 	XSetForeground(_dpy, gc, _fgpixel);
 	XSetBackground(_dpy, gc, _bgpixel);
@@ -531,7 +531,7 @@ ulong pixval(ulong rgb, ulong def){
 	color.red   = (rgb & 0xFF0000) >> 8;
 	color.flags = DoRed|DoGreen|DoBlue;
 
-	if(XAllocColor(_dpy, cmap, &color))
+	if(XAllocColor(_dpy, _cmap, &color))
 		return color.pixel;
 	return def;
 }

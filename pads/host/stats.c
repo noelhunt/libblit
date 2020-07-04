@@ -59,7 +59,7 @@ void PadStats::traffic(){
 
 class Allocator {
 public:
-	char	*profile(long);
+	char	*profile(int);
 
 };
 extern Allocator NewDel;

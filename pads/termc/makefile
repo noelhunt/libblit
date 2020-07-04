@@ -1,14 +1,15 @@
 BINDIR= $(HOME)/bin
 LIBDIR= ../../libblit
-INSTALL= /usr/gnu/bin/install
+INSTALL= install
 OFILES= buttons.o cache.o cursor.o host.o lib.o lineops.o \
 	master.o pad.o paint.o protocol.o scripthit.o
 
 # -DHALFDUP -DTAGS -DSCROLL -DSAMTERM -DBLANCHEDALMOND
 DEFS= -DHALFDUP
+MACH	= -m32
 INCLUDE = -I.. -I$(LIBDIR)
-CFLAGS= -mt -g -c -xCC $(INCLUDE) $(DEFS)
-LDFLAGS= -g
+CFLAGS= -mt -g -c -xCC $(MACH) $(INCLUDE) $(DEFS)
+LDFLAGS= -g $(MACH)
 
 LIB = $(LIBDIR)/libblit.a
 LDLIBS= $(LIB) -lX11
@@ -19,7 +20,7 @@ CLEANFILES= $(PROG) $(OFILES) *.core files.cs cscope.out
 
 all:  $(PROG)
 
-$(PROG):  $(OFILES)
+$(PROG):  $(OFILES) ${LIB}
 	$(CC) $(LDFLAGS) -o $@ $(OFILES) $(LDLIBS)
 
 install: $(BINDIR)/$(PROG)

@@ -1,3 +1,4 @@
+#include <time.h>
 #include <pads.h>
 
 class PadStats : public PadRcv {
@@ -57,7 +58,7 @@ void PadStats::traffic(){
 
 class Allocator {
 public:
-	char	*profile(long);
+	char	*profile(int);
 
 };
 

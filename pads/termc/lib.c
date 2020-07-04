@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include "univ.h"
 
-#define DPRINT
-
 char *itoa(int n){
 	static char pic[] = " [-][0-9]* ";
 	char cip[10];
@@ -38,7 +36,7 @@ void PaintAssert(char *msg, Rectangle r, Bitmap *back, Bitmap *text, Bitmap *bor
         string(screen, addpt(r.min, Pt(GAP*2,GAP*2)), text, ZP, font, msg);
 }
 
-long assertf(long l){
+int assertf(int l){
 	int wide;
 	Point p;
 	Rectangle r;
@@ -59,9 +57,9 @@ long assertf(long l){
 #endif
 
 #ifdef ASSERT
-long assertf(long l, char *s){
+int assertf(int l, char *s){
 	extern char KBDStr[];
-	register char *k = KBDStr, *p = ": Assertion failed.";
+	char *k = KBDStr, *p = ": Assertion failed.";
 	if( l ) return l;
 	rectf( &screen, Drect, 0, S );
 	while( *s ) *k++ = *s++;
@@ -93,7 +91,7 @@ Rectangle boundrect( Rectangle q, Rectangle r ){
 }
 
 Rectangle scrollbar( Rectangle r, int from, int to, int lo, int hi ){
-	long rh = Dy(r), h = hi-lo;
+	int rh = Dy(r), h = hi-lo;
 #ifdef TAGS
 	if( h == 0 ) return r;
 #endif
@@ -160,13 +158,12 @@ static char dbuf[256];
 void dprint( int step, char* fmt, ... ){
 	int n;
 	va_list av;
-#ifdef DPRINT
 	memset(dbuf, 0, 256);
 	if (step == 1)
 		n = sprintf(dbuf, "%*s ", ++depth, "+");
-	else if (step == 0)
+	else if (step == 2)
 		n = sprintf(dbuf, "%*s ", depth, "|");
-	else if (step == -1)
+	else if (step == 0)
 		n = sprintf(dbuf, "%*s ", depth--, "-");
 	else
 		return;
@@ -175,5 +172,4 @@ void dprint( int step, char* fmt, ... ){
 	vsnprintf(dbuf+n, 128-n-1, fmt, av);
 	va_end(av);
 	fprintf(stderr, "%s\n", dbuf);
-#endif
 }

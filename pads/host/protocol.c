@@ -4,37 +4,36 @@ static void Proto(p) { PutRemote(p); }
 
 static void CheckProto( p ) { if( GetRemote() != p ) ProtoErr(); }
 
-static long ShiftIn( bytes )
-register bytes;
-{
-	register long shifter = 0;
+static long ShiftIn( int bytes ){
+	int shifter = 0;
 
 	CheckProto( bytes );
 	while( bytes-- ) shifter = (shifter<<8) + (GetRemote()&0xFF);
 	return shifter;
 }
 
-long  RcvLong()  { return (long)  ShiftIn( P_LONG  ); }
+long  RcvLong()  { return (int)   ShiftIn( P_LONG  ); }
+#ifdef __x86_64
+long  RcvVLong() { return (long)  ShiftIn( P_VLONG  ); }
+#endif
 short RcvShort() { return (short) ShiftIn( P_SHORT ); }
-unsigned char RcvUChar() { return (unsigned char) ShiftIn( P_UCHAR ); }
+uchar RcvUChar() { return (uchar) ShiftIn( P_UCHAR ); }
 
-static void ShiftOut( bytes, shifter )
-register bytes;
-register long shifter;
-{
+static void ShiftOut( int bytes, int shifter ){
 	Proto( bytes );
 	do { PutRemote( (char)(shifter>>( (--bytes)*8 )) ); } while( bytes );
 }
 
-void SendLong(x)  long  x; { ShiftOut( P_LONG,  (long) x ); }
-void SendShort(x) short x; { ShiftOut( P_SHORT, (long) x ); }
-void SendUChar(x) unsigned char x; { ShiftOut( P_UCHAR, (long) x ); }
+void SendLong(int x)    { ShiftOut( P_LONG,  (int) x ); }
+#ifdef __x86_64
+long  SendVLong(long x) { ShiftOut( P_VLONG, (long) x ); }
+#endif
+void SendShort(short x) { ShiftOut( P_SHORT, (int) x ); }
+void SendUChar(uchar x) { ShiftOut( P_UCHAR, (int) x ); }
 
-char *RcvString( s0 )
-char *s0;
-{
-	register char *s = s0;
-	register unsigned char len;
+char *RcvString( char *s0 ){
+	char *s = s0;
+	uchar len;
 
 	CheckProto( P_STRING );
 	len = RcvUChar();
@@ -44,13 +43,11 @@ char *s0;
 	return s0;
 }
 
-void SendString(s)
-register char *s;
-{
+void SendString( char *s ){
 	int len;
 
 	Proto( P_STRING );
-	len =  strlen(s);
+	len = strlen(s);
 	if( len > 255 ) len = 255;
 	SendUChar( len );
 	while( len-- ) PutRemote(*s++); 

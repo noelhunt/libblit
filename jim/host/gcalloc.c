@@ -1,4 +1,5 @@
 #include "jim.h"
+#include <unistd.h>
 /*
  * Garbage-compacting allocator
  *
@@ -29,10 +30,9 @@
 static long	*nextlong;
 static long	*startarena;
 static long	*endarena;
-static		compact();
+static void	compact();
 
-extern char	*brk();
-extern char	*sbrk();
+void Bcopy(char*, char*, char*, int);
 
 struct header{
 	union uuu{
@@ -45,11 +45,7 @@ struct header{
 #define	pval	u.Upval
 #define	hp	((struct header *)p)
 
-char *
-gcalloc(nbytes, where)
-	register ulong nbytes;
-	long **where;
-{
+char *gcalloc(ulong nbytes, long **where){
 	register long *p;
 	register ulong nl;
 if(nextlong>endarena)panic("nextlong>endarena");
@@ -81,15 +77,11 @@ if(nextlong>endarena)panic("nextlong>endarena");
 	nextlong+=Nlongs;
 	return (char *)(*(hp->pval)=p+HEADERSIZE);
 }
-char *
-gcrealloc(cp, nbytes)
-	char *cp;
-	register ulong nbytes;
-{
+char *gcrealloc(char *cp, ulong nbytes){
 	register long *p=(long *)cp, *q;
 	register long *newp;
 	register long **ptrold;
-	register n;
+	register int n;
 	long *x;
 	p-=HEADERSIZE;	/* the header */
 	n=hp->nlongs;
@@ -114,7 +106,7 @@ void shiftgcarena(ulong nl){
 	register long *p;
 	if(startarena==0)
 		return;
-	bcopy((char *)startarena, (char *)nextlong, (char *)(startarena+nl), -1);
+	Bcopy((char *)startarena, (char *)nextlong, (char *)(startarena+nl), -1);
 	nextlong+=nl;
 	startarena+=nl;
 	endarena+=nl;
@@ -123,18 +115,14 @@ void shiftgcarena(ulong nl){
 			*(hp->pval)+=nl;
 	}
 }
-gcfree(cp)
-	char *cp;
-{
+void gcfree(char *cp){
 	register long *p=(long *)cp;
 	p-=HEADERSIZE;
 	if(p<startarena || nextlong<=p)
 		panic("gcfree");
 	hp->ival|=1;
 }
-static
-compact()
-{
+static void compact(){
 	register long *w, *p;
 	register ulong n;
 	w=p=startarena;
@@ -158,11 +146,7 @@ compact()
 	}
 	nextlong=w;
 }
-bcopy(s1, s2, d, dir)
-	register char *s1, *s2;
-	register char *d;
-	int dir;
-{
+void Bcopy(char *s1, char *s2, char *d,int dir){
 	register long n=s2-s1;
 	if(dir<0){
 		d+=s2-s1;
@@ -174,8 +158,7 @@ bcopy(s1, s2, d, dir)
 			*d++ = *s1++;
 		while(--n);
 }
-gcchk()
-{
+void gcchk(){
 	register long *p;
 	if(startarena==0)
 		return;

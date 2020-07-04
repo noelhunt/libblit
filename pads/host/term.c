@@ -6,7 +6,11 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/stat.h>
+#if defined(sun)
 #include <new.h>
+#elif defined(linux)
+#include <new>
+#endif
 SRCFILE("term.c")
 
 ItemCache  *ICache;
@@ -17,82 +21,46 @@ static void mallocerr(){
 	abort();
 }
 
-void Pick( const char *s, Action a, long o ){
+void Pick( const char *s, Action a, int o ){
 	Index ix;
 
 	trace("Pick(%d,%d)", a, o);
 	ix = ICache->place(Item(s, a, o));
 	R->pktstart( P_PICK );
-	R->sendshort( ix.sht() );
+	R->sendlong( ix.sht() );
 	R->pktend();
 }
 
-const char *padsterm = "padsterm";
+char *padsterm = "padsterm";
 
-const char *loadterm(int argc, char **argv, const char *cmd){
-	int targc = 0;
-	char *targv[20];
-	int ph2t[2], pt2h[2];
-	char err[128];
-	char *StrDup(const char*);
-	targv[targc++] = StrDup(cmd);
-	while( argc > 1 ){
-		targv[targc++] = argv[argc];
-               --argc, argv++;
-        }
-	targv[targc] = 0;
-	if(pipe(ph2t)==-1 || pipe(pt2h)==-1){
-		sprintf(err, "loadterm: pipe: %s", strerror(errno));
-		return strdup(err);
-	}
-	switch(fork()){
-	case 0:
-		dup2(ph2t[0], 0);
-		dup2(pt2h[1], 1);
+void sigpipe_h(int s){ abort(); }
+
+#ifdef PIPE2
+const char *PadsInit(const char *terminal){
+	int ph2t[2], pt2h[2], pid;
+	if((pipe(ph2t)==-1)||(pipe(pt2h)==-1))
+		return strerror(errno);
+	if(!terminal)
+		terminal = padsterm;
+	if((pid=fork())==0){
+		close(0); dup(ph2t[0]);
+		close(1); dup(pt2h[1]);
 		close(ph2t[0]);
 		close(ph2t[1]);
 		close(pt2h[0]);
 		close(pt2h[1]);
-		execvp(padsterm, targv);
-		fprintf(stderr, "can't exec: ");
-		perror(padsterm);
-		exit(127);
-	case -1:
-		sprintf(err, "can't fork padsterm: %s", strerror(errno));
-		return strdup(err);
+		execlp(terminal, "pads", (char *)0);
+		fprintf(stderr, "execlp: %s\n", strerror(errno));
+		exit(1);
 	}
-	dup2(pt2h[0], 0);
-	dup2(ph2t[1], 1);
+	if(pid==-1)
+		return "pads fork failed";
+	close(0); dup(pt2h[0]);
+	close(1); dup(ph2t[1]);
 	close(ph2t[0]);
 	close(ph2t[1]);
 	close(pt2h[0]);
 	close(pt2h[1]);
-
-	return 0;
-}
-
-void sigpipe_h(int s){ abort(); }
-
-#ifdef SAMTERM
-const char *PadsInit(const char *loadcmd){
-	int afildes[2], bfildes[2], pid;
-	if((pipe(afildes)==-1)||(pipe(bfildes)==-1))
-		return "can't open pipe\n";
-	if((pid=fork())==0){
-		close(0);
-		dup(afildes[0]);
-		close(1);
-		dup(bfildes[1]);
-		execlp(loadcmd, "pads", (char *)0);
-		exit(1);
-	}
-	if(pid==-1)
-		return "terminal fork failed";
-	sleep(3);	/* for dbx: allow time for child to get out */
-	close(0);
-	dup(bfildes[0]);
-	close(1);
-	dup(afildes[1]);
 	R = new Remote(0,1);
 	R->pktstart(P_VERSION); R->sendlong(PADS_VERSION); R->pktend();
 	R->pktstart(P_BUSY); R->pktend();
@@ -101,12 +69,11 @@ const char *PadsInit(const char *loadcmd){
 	return 0;
 }
 #else
-const char *PadsInit(const char *loadcmd){
+const char *PadsInit(const char *terminal){
 	pid_t pid;
-#ifdef DELAY
-	struct timespec rqtp;
-#endif
 	int afildes[2];
+	if(!terminal)
+		terminal = padsterm;
 	if( pipe(afildes)==-1 )
 		return "can't open pipe\n";
 	if( (pid=fork())==0 ){
@@ -114,26 +81,18 @@ const char *PadsInit(const char *loadcmd){
 		dup2(afildes[0], 1);
 		close(afildes[0]);
 		close(afildes[1]);
-		execlp(loadcmd, "pads", (char *)0);
-		perror(loadcmd);
+		execlp(terminal, "pads", (char *)0);
+		fprintf(stderr, "execlp: %s\n", strerror(errno));
 		exit(1);
 	}
 	if(pid==-1)
 		return "terminal fork failed";
 	close(afildes[0]);
-#ifdef DELAY
-	rqtp.tv_sec = 1; rqtp.tv_nsec = 50000;
-	nanosleep(&rqtp, 0);
-#endif
-//	signal(SIGPIPE, sigpipe_h);
 	R = new Remote(afildes[1]);
 	R->pktstart(P_VERSION); R->sendlong(PADS_VERSION); R->pktend();
 	R->pktstart(P_BUSY); R->pktend();
 	ICache = new ItemCache;
 	CCache = new CarteCache;
-#ifdef NOSTDERR
-	close(2);
-#endif
 	return 0;
 }
 #endif
@@ -144,7 +103,7 @@ const char *PadsTermInit(int argc, char **argv, char *machine){
 
 void PadsRemInit(){
 	R = new Remote(0);
-	set_new_handler(mallocerr);
+	std::set_new_handler(mallocerr);
 	R->pktstart(P_VERSION); R->sendlong(PADS_VERSION); R->pktend();
 	R->pktstart(P_BUSY); R->pktend();
 	ICache = new ItemCache;
@@ -154,7 +113,7 @@ void PadsRemInit(){
 char *TapTo;
 void WireTap(PRINTF_ARGS){
 	static int fd = -1;
-	static long t0;
+	static int t0;
 	struct stat s;
 	long t;
 	va_list ap;
@@ -217,7 +176,7 @@ void Shell(){
 	char cmd[256];
 	R->rcvstring(cmd);
 	FILE *fp = Popen(cmd, "w");
-	for( long lines = R->rcvlong(); lines>0; --lines ){
+	for( int lines = R->rcvlong(); lines>0; --lines ){
 		char data[256];
 		if( fp ) fprintf(fp, "%s\n", R->rcvstring(data));
 	}
@@ -263,10 +222,9 @@ const char *ProtoToString(Protocol);
 
 void TermServe(){
 	Protocol p;
-	long n, to, pick = 0;
+	int n, to, pick = 0;
 
 	R->pktstart(P_IDLE); R->pktflush();
-fprintf(stderr, "TermServe() sent P_IDLE\n");
 	p = (Protocol) R->get();
 	if( p == P_PICK ) {
 		pick = 1;
@@ -274,7 +232,6 @@ fprintf(stderr, "TermServe() sent P_IDLE\n");
 	}
 	PadRcv *par = R->rcvobj();
 	PadRcv *obj = R->rcvobj();
-fprintf(stderr, "TermServe() got 0x%08x 0x%08x %s\n",par,obj,ProtoToString(p));
 	if( p != P_CYCLE ){ R->pktstart(P_BUSY); R->pktflush(); }
 	trace("TermServe() p.%X", p&0xFF);
 	switch( (int) p ){
@@ -310,7 +267,7 @@ fprintf(stderr, "TermServe() got 0x%08x 0x%08x %s\n",par,obj,ProtoToString(p));
 			to = R->rcvlong();
 			if( !BothValid(par,obj) ) return;
 			while( n <= to )
-				obj->linereq((long) n++, 0);
+				obj->linereq((int) n++, 0);
 			break;
 		case P_QUIT:
 			exit(0);
@@ -371,7 +328,7 @@ const char *ProtoToString(Protocol p){
 	}
 }
 
-void PadsServe(long n){
+void PadsServe(int n){
 	trace("PadsServe( n.%d )", n);
 	if( n ){
 		while( n-->0 ) TermServe();

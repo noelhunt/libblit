@@ -25,14 +25,14 @@ void PutRemote( char c ){
 	RemoteBuffer[RemoteIndex++] = c;
 }
 
-void ToHost( Protocol p, long l ){
+void ToHost( Protocol p, int l ){
 	extern Pad *Current;
-
 	void Proto(int);
+
 	Proto( p );
-	SendLong( HostParent->object );
+	SendObj( HostParent->object );
 	SendShort( HostParent->oid );
-	SendLong( HostObject->object );
+	SendObj( HostObject->object );
 	SendShort( HostObject->oid );
 	SendLong( l );
 	FlushRemote();
@@ -42,7 +42,7 @@ void HostAction( Index *i ){	/* <text:action:opand> stored at host	*/
 	ToHost( P_ACTION, *i );
 }
 
-void HostNumeric( long n ){	/* always in short range ! */
+void HostNumeric( int n ){	/* always in short range ! */
 	ToHost( P_NUMERIC, (short) n );
 }
 

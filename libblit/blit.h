@@ -12,7 +12,12 @@
 #undef	Event
 #undef	Cursor
 
-#define	Font	XFontStruct	
+#define	Font	XFontStruct
+
+#define fontheight(fp)	((fp)->max_bounds.ascent+(fp)->max_bounds.descent)
+#define fontwidth(fp)	((fp)->max_bounds.width)
+#define fontwidthc(fp,c) (XTextWidth((fp), &(c), 1))
+#define fontnchars(fp)	((fp)->max_char_or_byte2+1)
 
 #include <sys/time.h>
 
@@ -25,7 +30,7 @@ enum {
 	CPU       =  32,
 	ALARM     =  64,
 	SELECT    =  128,	/* x11 selection */
-	SNARF     =  128
+	SNARF     =  256
 };
 
 #define nap(x)		Jnap(x)
@@ -37,11 +42,6 @@ enum {
 
 #define	min(x,y)	(((x) < (y)) ? (x) : (y))
 #define	max(x,y)	(((x) > (y)) ? (x) : (y))
-
-#define fontheight(fp)	((fp)->max_bounds.ascent+(fp)->max_bounds.descent)
-#define fontwidth(fp)	((fp)->max_bounds.width)
-#define fontwidthc(fp,c) (XTextWidth((fp), &(c), 1))
-#define fontnchars(fp)	((fp)->max_char_or_byte2+1)
 
 #define alloc(n)	calloc(n,1)
 #define	muldiv(a,b,c)	((long)((a)*((long)b)/(c)))
@@ -256,7 +256,6 @@ extern Rectangle Drect;
 extern Bitmap	Jfscreen;
 extern Point	Joffset;
 extern int	dpyfd;
-extern int	rcvmask;
 extern Cursor	normalcursor;
 extern Mouse	mouse;
 extern JProc	*P;

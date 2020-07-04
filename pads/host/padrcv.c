@@ -26,11 +26,11 @@ void MissingVirtual(const char *s, const char *f){
 }
 
 char *PadRcv::kbd(char*)	{ return (char*)"no kbd() function"; }
-void PadRcv::numeric(long)	{ MissingVirtual("NumericRange()", "numeric"); }
+void PadRcv::numeric(int)	{ MissingVirtual("NumericRange()", "numeric"); }
 void PadRcv::userclose()	{ MissingVirtual("USERCLOSE", "userclose"); }
 void PadRcv::usercut()		{ MissingVirtual("USERCUT", "usercut"); }
 void PadRcv::cycle()		{ MissingVirtual("alarm()", "cycle"); }
-void PadRcv::linereq(long, Attrib) { MissingVirtual("lines()", "linereq"); }
+void PadRcv::linereq(int, Attrib) { MissingVirtual("lines()", "linereq"); }
 
 int PadRcv::accept(Action /*a*/){
 //	trace("%d.accept(%d)", this, a);
@@ -40,7 +40,7 @@ int PadRcv::accept(Action /*a*/){
 int PadRcv::disc()		{ trace("%d.disc()", this); return 0;	}
 
 #ifdef OPENLOOK
-void PadRcv::showhelp(long l){
+void PadRcv::showhelp(int l){
 	extern int helptopic(const char*);
 	const char *s = help();
 	if (!s)

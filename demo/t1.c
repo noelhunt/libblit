@@ -29,7 +29,7 @@ void main(int argc, char **argv){
 	int i, x,y;
 	Point p;
 	Bitmap *b, *b2, *arrow, *lattice;
-	Bitmap *magenta, *orange;
+	Bitmap *magenta, *orange, *box;
 	Rectangle r;
 	Cursor *prev = 0;
 
@@ -38,8 +38,8 @@ void main(int argc, char **argv){
  	x = Drect.min.x + Drect.max.x / 2;
 	y = Drect.min.y + Drect.max.y / 2;
 	segment(&screen, Pt(x-100,y-100), Pt(x+200,y+200), ~0, D^S);
-	p = string(&screen, Pt(x+20,y), &defont, "hello world", ~0, D^S);
-	p = string(&screen, addpt(p, Pt(10,0)), &defont, "Goodbye world", ~0, D^S);
+	p = string(&screen, Pt(x+20,y), font, "hello world", ~0, D^S);
+	p = string(&screen, addpt(p, Pt(10,0)), font, "Goodbye world", ~0, D^S);
 
 	b = balloc(Rect(0,0,2,2), screen.ldepth);
 	rectf(b, b->r, pixval(0x99004C, 0), S);
@@ -69,6 +69,12 @@ void main(int argc, char **argv){
 	rectf(orange, orange->r, pixval(0xFFAA00,0), S);
 
 	copymasked(&screen, Pt(50,50), orange, lattice, orange->r);
+
+	box = balloc(Rect(0,0,128,16), screen.ldepth);
+	rectf(box, box->r, pixval(DYellow,0), S);
+	bitblt(&screen, Pt(600,500), box, box->r, S);
+	sleep(45);
+	copymasked(&screen, Pt(600,500), magenta, arrow, magenta->r);
 
 	for(;;nap(1)){
 		if(button1())

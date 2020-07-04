@@ -29,7 +29,7 @@ void main(int argc, char *argv[]){
 	Configuration |= NOVICEUSER|BIGMEMORY;
 	PadStart();
 	cursswitch(&Coffee);
-	sleep( 60 );
+	sleep( 30 );
 	PadClip();
 	alarm( ALARM_CYCLE );
 	for( ;; ){

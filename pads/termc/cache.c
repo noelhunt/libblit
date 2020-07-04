@@ -10,7 +10,7 @@ void CacheOp(Protocol p){
 	Carte *c;
 	Index *rcv;
 
-	i = RcvShort();
+	i = RcvLong();
 	switch( (int) p ){
 	case P_I_DEFINE:
 		assert(!ICache, "P_I_DEFINE");
@@ -23,27 +23,18 @@ void CacheOp(Protocol p){
 		CCache = (Carte***) Alloc(MJR(C_SIZE) * sizeof(Carte*) );
 		break;
 	case P_I_CACHE:
-#ifdef GCALLOC
-		if( !ICache[MJR(i)] ) GCAlloc(MNR(I_SIZE), &ICache[MJR(i)]);
-#else
-		if( !ICache[MJR(i)] ) ICache[MJR(i)] =
-			(char*) Alloc(MNR(I_SIZE) * sizeof(Carte*));
-#endif
+		if( !ICache[MJR(i)] ) ICache[MJR(i)] = (char*)Alloc(MNR(I_SIZE));
 		RcvString( &ICache[MJR(i)][MNR(i)] );
 		break;
 	case P_C_CACHE:
-		size = RcvUChar();
+		size = RcvLong();
 		if( !CCache[MJR(i)] ) CCache[MJR(i)] =
 			(Carte**) Alloc(MNR(C_SIZE) * sizeof(Carte*));
 		assert( !CCache[MJR(i)][MNR(i)], "P_C_CACHE" );
-#ifdef GCALLOC
-		c = (Carte*) GCAlloc(CARTESIZE(size), (char **)&CCache[MJR(i)][MNR(i)]);
-#else
 		c = CCache[MJR(i)][MNR(i)] = (Carte*) Alloc(CARTESIZE(size));
-#endif
 		c->attrib = RcvUChar();
-		for( rcv = c->bin; size-- >= 0; *rcv++ = RcvShort()) {}
-		c->size = RcvUChar();			/* recursive size   */
+		for( rcv = c->bin; size-- >= 0; *rcv++ = RcvLong()) {}
+		c->size = RcvLong();			/* recursive size   */
 		c->width = RcvUChar();			/* recursive widest */
 		break;
 	default:
@@ -59,8 +50,7 @@ char *IndexToStr(Index i){
 
 Carte *IndexToCarte(Index i){
 	assert( MJR(i)&CARTE, "IndexToCarte" );
-	Index j = i;
-	i &= ~(CARTE<<8);
+	i &= ~(CARTE<<16);
 	assert(MJR(i)<MJR(C_SIZE) && CCache[MJR(i)] && CCache[MJR(i)][MNR(i)], "IndexToCarte: index");
 	return CCache[MJR(i)][MNR(i)];
 }

@@ -1,0 +1,22 @@
+/* main.c */
+void main(int argc, char *argv[]);
+void sendsnarf(void);
+void panic(char *s);
+void closeall(void);
+void txinit(Text *t);
+void txfree(Text *t);
+void close(Text *t);
+void init(void);
+void tellseek(Text *t, int y);
+int usualtest(void);
+void loadfile(Text *t, int posn, int n);
+void urequest(int f);
+void waitunix(int *flag);
+void message(void);
+int integer(char *s);
+void mesg(char *s, int sendit);
+void sendstr(Text *t, int op, int posn, int n, char *d);
+int scrolltest(void);
+int scroll(Text *t, int nlines);
+char *data2(int n);
+void Send(int op, int posn, int n, char *s);

@@ -153,10 +153,7 @@ void init(){
 	worktext=0;
 }
 /*ARGSUSED*/
-void seek(t, pt, but)
-	register Text *t;
-	Point pt;
-{
+void seek(Text *t, Point pt, int but){
 	register Frame *f=t->frame;
 	Rectangle r;
 	register n;
@@ -175,9 +172,7 @@ void seek(t, pt, but)
 	loadfile(t, 0, INFINITY);
 	setsel(t, 0);
 }
-void tellseek(t, y)
-	Text *t;
-{
+void tellseek(Text *t, int y){
 	register Frame *f=t->frame;
 	Rectangle r;
 	f->scrolly=y;
@@ -190,14 +185,10 @@ void tellseek(t, y)
 	r.max.x--;
 	rXOR(r);
 }
-int usualtest()
-{
+int usualtest(){
 	return(!inscomplete);
 }
-void loadfile(t, posn, n)
-	register Text *t;
-	register posn;
-{
+void loadfile(Text *t, int posn, int n){
 	loadpt=ptofchar(t->frame, posn);
 	reqlimit=n;
 	ntoload=n;
@@ -216,9 +207,7 @@ void loadfile(t, posn, n)
 		}
 	}
 }
-void urequest(f)
-	int f;
-{
+void urequest(int f){
 	register n;
 	if(nrequested <= reqlimit){
 		n=min(NDATA, reqlimit-nrequested);
@@ -227,10 +216,7 @@ void urequest(f)
 		nrequested+=n;
 	}
 }
-void move(t, pt, but)
-	register Text *t;
-	Point pt;
-{
+void move(Text *t, Point pt, int but){
 	register Frame *f=t->frame;
 	Rectangle r;
 	register n;
@@ -248,9 +234,7 @@ void move(t, pt, but)
 	setsel(t, charofpt(f, pt));
 	send(t->file, O_SELECT, f->s1, 2, data2(0));
 }
-void waitunix(flag)
-	register *flag;
-{
+void waitunix(int *flag){
 	cursswitch(&deadmouse);
 	*flag=FALSE;
 	while(*flag==FALSE){
@@ -260,8 +244,7 @@ void waitunix(flag)
 	}
 	cursswitch((Texture *) 0);
 }
-void message()
-{
+void message(){
 	register n, op, posn;
 	unsigned f;
 	register char *data;
@@ -360,9 +343,7 @@ void message()
 		mesg("unk\n", TRUE);
 	}
 }
-int integer(s)
-	register char *s;
-{
+int integer(char *s){
 	return (unsigned char)s[0]+(s[1]<<8);
 }
 int diagnewline=TRUE;
@@ -409,15 +390,11 @@ void sendstr(Text *t, int op, int posn, int n, char *d){
 		n-=m;
 	}while(n > 0);
 }
-int scrolltest()
-{
+int scrolltest(){
 	return(ntoload<=0);
 }
-int scroll(t, nlines)
-	register Text *t;
-	register nlines;
-{
-	register nchars;
+int scroll(Text *t, int nlines){
+	register int nchars;
 	register Frame *f=t->frame;
 	if(nlines==0 || t==diag)
 		return 0;
@@ -441,7 +418,7 @@ int scroll(t, nlines)
 	}
 	return nchars;
 }
-char *data2(n){
+char *data2(int n){
 	static char x[2];
 	x[0]=n;
 	x[1]=n>>8;

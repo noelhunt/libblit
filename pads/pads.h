@@ -1,21 +1,27 @@
 #ifndef PADS_H
 #define PADS_H
 
-#define SAFE					/* Safe cache allocation */
+#ifdef linux
+# define PIPE2				/* Linux pipes are unidirectional */
+#endif
+
+#define SAFE				/* Safe cache allocation */
 
 typedef unsigned char	uchar;
 typedef unsigned short	ushort;
 typedef unsigned short	Attrib;
 
-#define PADS_VERSION	0x930125		/* YYMMDD */
-#define CARTE		0x80
+#define PADS_VERSION	0x930125	/* YYMMDD */
+#define CARTE		0x8000
 #define NUMERIC		1
 
 enum Protocol {
 	P_UCHAR		= 1,
 	P_SHORT		= 2,
 	P_LONG		= 4,
-
+#ifdef __x86_64
+	P_VLONG		= 8,
+#endif
 	P_CACHEOP	= 0x10,
 	P_I_DEFINE	= 0x11,
 	P_I_CACHE	= 0x12,
@@ -107,11 +113,11 @@ class Index {
 public:
 	ushort	major;
 	ushort	minor;
-		Index()			{ major = minor = 0;		}
-	 	Index(int i)		{ major = i>>8; minor = i&0xFF; }
-		Index(int j, int n )	{ major = j;	minor = n;	}
-	ushort	sht();			/* don't inline sht() - sht() etc */
-	int	null()			{ return !(major|minor);	}
+		Index()			{ major = minor = 0;			}
+	 	Index(int i)		{ major = i>>16; minor = i&0xFFFF;	}
+		Index(int j, int n )	{ major = j;	 minor = n;		}
+	uint	sht();			/* don't inline sht() - sht() etc */
+	int	null()			{ return !(major|minor);		}
 };
 extern Index ZIndex;
 
@@ -131,9 +137,9 @@ public:
 #endif
 };
 #else
-#define MJR(i)	((i)>>8)
-#define MNR(i)	((i)&0xFF)
-typedef unsigned int Index;
+#define MJR(i)	((i)>>16)
+#define MNR(i)	((i)&0xFFFF)
+typedef ulong Index;
 typedef struct Carte Carte;
 typedef enum Protocol Protocol;
 struct Carte {
@@ -167,14 +173,14 @@ struct Carte {
 #include <stdarg.h>
 char *sf(const char*,...);
 char *vf(const char*,va_list);
-const char *PadsInit(const char* = 0);
-void PadsServe(long = 0);
+const char *PadsInit(const char* =0);
+void PadsServe(int = 0);
 void NewHelp();
 void NewPadStats();
 class PadRcv;
 typedef void (PadRcv::*Action)(...);
-void Pick(const char*,Action,long);
-long UniqueKey();
+void Pick(const char*,Action,int);
+int UniqueKey();
 Index NumericRange(short,short);
 void PadsWarn(PRINTF_TYPES);
 void PadsQuit();
@@ -202,14 +208,14 @@ public:
 virtual	int	disc();
 virtual char	*kbd(char*);
 virtual char	*help();
-virtual	void	numeric(long);
+virtual	void	numeric(int);
 virtual	void	userclose();
 virtual	void	cycle();
-virtual	void	linereq(long,Attrib=0);
+virtual	void	linereq(int,Attrib=0);
 virtual	int	accept(Action);
 virtual	void	usercut();
 #ifdef OPENLOOK
-	void	showhelp(long);
+	void	showhelp(int);
 #endif
 };
 
@@ -219,14 +225,14 @@ const	char	*_name;
 const	char	*_banner;
 	Attrib	_attributes;
 	char	_unused[2];
-	long	_lines;
+	int	_lines;
 	void	termop(enum Protocol);
-	long	errorkey;
-	void	nameorbanner(enum Protocol, const char*, void*);
+	int	errorkey;
+	void	nameorbanner(enum Protocol, const char*, va_list);
 #ifdef HELPMENU
 	void	helpmenu();
 #endif
-	void	vinsert(long, Attrib, PadRcv*, Index, const char*, va_list);
+	void	vinsert(int, Attrib, PadRcv*, Index, const char*, va_list);
 public:
 	int	ok();
 		Pad(PadRcv *);
@@ -237,21 +243,21 @@ public:
 	void	dump();
 	void	error(PRINTF_TYPES);
 	void	insert(class Line&);
-	void	insert(long, Attrib, PadRcv*, Index, const char*, ...);
-	void	insert(long, Attrib, PadRcv*, class Menu&, const char*, ...);
-	void	insert(long, Attrib, const char*, ...);
-	void	insert(long, const char*, ...);
-	void	lines(long);
+	void	insert(int, Attrib, PadRcv*, Index, const char*, ...);
+	void	insert(int, Attrib, PadRcv*, class Menu&, const char*, ...);
+	void	insert(int, Attrib, const char*, ...);
+	void	insert(int, const char*, ...);
+	void	lines(int);
 	void	makecurrent();
-	void	makegap(long,long);
+	void	makegap(int,int);
 	void	menu(Index);
 	void	menu(class Menu&);
 	void	name(PRINTF_TYPES);
 	void	options(Attrib, Attrib=0);
 	void	tabs(short);
-	void	removeline(long);
-	void	createline(long,long);
-	void	createline(long);
+	void	removeline(int);
+	void	createline(int,int);
+	void	createline(int);
 };
 
 class Line {
@@ -260,7 +266,7 @@ public:
 		Line();
 	PadRcv	*object;
 	char	*text;
-	long	key;
+	int	key;
 	Attrib	attributes;
 	char	dummy[2];	/* For buggy SysV i386 compiler */
 	Index	carte;
@@ -278,8 +284,8 @@ class Item {
 public:
 const	char	*text;
 	Action	action;
-	long	opand;
-		Item(const char*,Action,long);
+	int	opand;
+		Item(const char*,Action,int);
 		Item();			/* ever used ? */
 };
 
@@ -290,13 +296,13 @@ class Menu {
 public:
 		Menu();
 		~Menu();
-		Menu( const char*, Action=0, long=0 );
-	Index	index( const char* =0, Action=0, long=0 );
-	void	first( const char*, Action=0, long=0 );
+		Menu( const char*, Action=0, int=0 );
+	Index	index( const char* =0, Action=0, int=0 );
+	void	first( const char*, Action=0, int=0 );
 	void	first( Index );
-	void	last( const char*, Action=0, long=0 );	
+	void	last( const char*, Action=0, int=0 );	
 	void	last( Index );	
-	void	sort( const char*, Action=0, long=0 );
+	void	sort( const char*, Action=0, int=0 );
 	void	sort( Index );
 };
 
@@ -317,7 +323,7 @@ class Cache {
 	Index	current;
 	Index	SIZE;
 public:
-		Cache(unsigned char,unsigned char);
+		Cache(ushort, ushort);
 	int	ok();
 };
 
@@ -354,15 +360,22 @@ extern CarteCache *CCache;
 #endif
 
 #ifdef PADS_TERM
-long	RcvLong();
+int	RcvLong();
+#ifdef __x86_64
+long	RcvVLong();
+#endif
 ushort	RcvShort();
 uchar	RcvUChar();
 char	*RcvString();
 
-void	SendLong();
-void	SendShort();
-void	SendUChar();
-void	SendString();
+void	SendLong(int);
+#ifdef __x86_64
+void	SendVLong(long);
+#endif
+void	SendShort(short);
+void	SendUChar(uchar);
+void	SendString(char*);
+void	SendObj(long);
 #else
 #include <stdio.h>
 FILE *Popen(const char*,const char*);
@@ -370,7 +383,7 @@ int Pclose(FILE*);
 
 class Remote {
 public:
-#ifndef SAMTERM
+#ifndef PIPE2
 	int	fd;
 #else
 	int	fd[2];
@@ -378,8 +391,8 @@ public:
 	int	pktbase;
 	int	pktsize;
 	uchar	writebuffer[2048];
-	long	shiftin(int);
-	void	shiftout(int, long);
+	int	shiftin(int);
+	void	shiftout(int, int);
 	int	writesize;
 	char	*_error;
 	void	err(const char * = 0);
@@ -387,12 +400,18 @@ public:
 	void	checkproto(int);
 	void	put(char);
 	void	proto(int);
-	long	rcvlong();
+	int	rcvlong();
+#ifdef __x86_64
+	long	rcvvlong();
+#endif
 	short	rcvshort();
 	uchar	rcvuchar();
 	PadRcv	*rcvobj();
 
-	void	sendlong(long);
+	void	sendlong(int);
+#ifdef __x86_64
+	void	sendvlong(long);
+#endif
 	void	sendobj(PadRcv*);
 	void	sendshort(short);
 	void	senduchar(unsigned char);
@@ -406,10 +425,10 @@ public:
 	void	share();
 
 		Remote(const char*);
-#ifdef SAMTERM
-		Remote(int,int);
-#else
+#ifndef PIPE2
 		Remote(int);
+#else
+		Remote(int,int);
 #endif
 };
 
@@ -417,10 +436,11 @@ extern Remote *R;
 
 #endif
 
-#if defined(sgi) && defined(_BSD_SIGNALS)
-/* C++ on IRIX 5.1 */
-#include <errno.h>
-#define SIG_TYP SIG_PF
+#ifdef linux
+#define SIG_PF	SIG_TYP
+
+typedef void		SIG_FUNC_TYP(int);
+typedef SIG_FUNC_TYP	*SIG_TYP;
 #endif
 #endif
 

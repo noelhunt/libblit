@@ -1,38 +1,39 @@
 #include "jim.h"
 #include "file.h"
+#include "func.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 struct stat statbuf;
 char	*mktemp();
 long	lseek();
-char	tempname[];
+char	tempname[16];
 int	tempfile;
 
-static	void seek();
-static	void newblock();
-static	void relblock();
-static	void clearblocks();
+static void newblock(Block *b, int l);
+static void relblock(Block *b);
+static void clearblocks(File *f);
+static void growblock(File *f);
 
 #define	MAXFREE 512
 static	int nfree=0;	/* number of known free blocks */
 static	int next=0;		/* next available block in file */
 static	short freelist[MAXFREE];
 static	short fileid[MAXFILES];
-File *
-Fileid(int id)
-{
-	register File *f;
+File *Fileid(int id){
+	File *f;
 	for(f=file; f; f=f->next)
 		if(f->id==id)
 			return f;
 	return 0;
 }
-File *
-Fnew(){
-	register File *f;
-	register int id;
+File *Fnew(){
+	File *f;
+	int id;
 	/* first see if there's a spare */
 	f=(File *)alloc((ulong)sizeof(File));
 	for(id=0; id<MAXFILES && fileid[id]; id++)
@@ -68,11 +69,8 @@ static void relblock(Block *b){
 	if(nfree<MAXFREE)
 		freelist[nfree++]=b->bnum;
 }
-static
-clearblocks(f)
-	register File *f;
-{
-	register Block *b;
+static void clearblocks(File *f){
+	Block *b;
 	/*
 	 * Always leave the first block alive, and delete
 	 * in reverse order so they reallocate in forward order
@@ -83,30 +81,20 @@ clearblocks(f)
 	if(f->nblocks==1)
 		f->block[0].nbytes=0;
 }
-static
-growblock(f)
-	register File *f;
-{
+static void growblock(File *f){
 	gcrenew(f->block, f->nalloc+=NBLOCK);
 }
-File *
-Fcreat(f, s)
-	register File *f;
-	char *s;
-{
-	strinit(&f->name);
-	strdup(&f->name, s);
+File *Fcreat(File *f, char *s){
+	Strinit(&f->name);
+	Strdup(&f->name, s);
 	f->selloc=0;
 	f->nsel=0;
 	f->origin=0;
 	f->date=0;
 	return f;
 }
-File *
-Fload(f)
-	register File *f;
-{
-	strinit(&f->str);
+File *Fload(File *f){
+	Strinit(&f->str);
 	if(f->block==0){
 		f->block=(Block *)gcalloc((ulong)NBLOCK*sizeof(Block), (long **)&f->block);
 		f->nalloc=NBLOCK;
@@ -119,20 +107,16 @@ Fload(f)
 	Fgetblock(f, 0);
 	return f;
 }
-Fread(f, posn, str, setdate, r)
-	register File *f;
-	long posn;
-	String *str;
-{
-	register n, nbytes=0;
+int Fread(File *f, long posn, String *str, int setdate, int r){
+	int n, nbytes=0;
 	char buf[BLOCKSIZE];
-	register here, b;
-	register char *s;
+	int here, b;
+	char *s;
 
 	if(r==0){
 		s=charstar(str);
 		if(s[0]==0)
-			return;
+			return 0;
 		if((r=open(s, 0)) == -1){
 			mesg("can't open", s);
 			return 0;	/* this return value is never seen */
@@ -163,21 +147,17 @@ Fread(f, posn, str, setdate, r)
  * Dump file f to named file; but if fd>0, it's an open file
  * and the file should be appended to it.
  */
-Fwrite(f, fname, fd)
-	register File *f;
-	register String *fname;
-	register fd;
-{
+void Fwrite(File *f, String *fname, int fd){
 	char buf[BLOCKSIZE];
-	register b;
-	register newfile=fd==0;
-	register char *s=fname? charstar(fname) : "some file";
+	int b;
+	int newfile=fd==0;
+	char *s=fname? charstar(fname) : "some file";
 	int issame=FALSE;
 
 	Fputblock(f);
 	if(fd==0){
 		if(stat(s, &statbuf)!=0){
-			dprintf("new file; ");
+			dprint("new file; ", 0);
 			issame=TRUE;
 		}else if(f->date==DUBIOUS){
 			f->date=statbuf.st_mtime;
@@ -200,7 +180,7 @@ Fwrite(f, fname, fd)
 		Write(s, fd, buf, (long)f->block[b].nbytes);
 	}
 	if(buf[f->block[b-1].nbytes-1]!='\n' && length(f)>0)
-		dprintf("last char not newline; ");
+		dprint("last char not newline; ", 0);
 	if(issame){
 		fstat(fd, &statbuf);
 		f->date=statbuf.st_mtime;
@@ -211,13 +191,8 @@ Fwrite(f, fname, fd)
 /*
  * Fwritepart: write out nbytes from f at posn to file descriptor fd
  */
-Fwritepart(f, posn, nbytes, fd)
-	register File *f;
-	long posn;
-	long nbytes;
-	register fd;
-{
-	register n, nthisblock;
+int Fwritepart(File *f, long posn, long nbytes, int fd){
+	int n, nthisblock;
 	while(nbytes>0){
 		if((n=Fseek(f, posn+1)-1)<0)
 			break;
@@ -229,9 +204,7 @@ Fwritepart(f, posn, nbytes, fd)
 	}
 	return nbytes!=0;
 }
-samefile(f1, f2)
-	String *f1, *f2;
-{
+int samefile(String *f1, String *f2){
 	struct stat stat2;
 	return stat(charstar(f1), &statbuf)==0 /* else file doesn't exist, no problem */
 	    && stat(charstar(f2), &stat2)==0
@@ -239,19 +212,15 @@ samefile(f1, f2)
 	    && statbuf.st_ino==stat2.st_ino ;	/* the same file, for sure */
 }
 /* shut down, but keep the storage allocated */
-Fclose(f)
-	register File *f;
-{
+void Fclose(File *f){
 	if(f->block)
 		clearblocks(f);
-	strfree(&f->name);
-	strfree(&f->str);
+	Strfree(&f->name);
+	Strfree(&f->str);
 	f->str.s=f->name.s=0;	/* shows that's it's clear */
 }
-Ffree(f)
-	register File *f;
-{
-	register File *g;
+void Ffree(File *f){
+	File *g;
 	Fclose(f);
 	fileid[f->id]=0;
 	if(f==file)
@@ -262,37 +231,23 @@ Ffree(f)
 	g->next=f->next;
 	free((char *)f);
 }
-Freset(f)
-	register File *f;
-{
+void Freset(File *f){
 	if(f->block)
 		clearblocks(f);
-	strzero(&f->str);
+	Strzero(&f->str);
 	f->origin=0;
 	f->nsel=0;
 	f->selloc=0;
 }
-toolarge(f)
-	register File *f;
-{
+void toolarge(File *f){
 	error("temp file too large for", charstar(&f->name));
 }
-Read(s, fd, a, n)
-	char *s;
-	int fd;
-	char *a;
-	int n;
-{
+void Read(char *s, int fd, char *a, ulong n){
 	if(read(fd, a, n) != n)
 		ioerr("read", s);
 }
 
-Write(s, fd, a, n)
-	char *s;
-	int fd;
-	char *a;
-	ulong n;
-{
+void Write(char *s, int fd, char *a, ulong n){
 	if(write(fd, a, (int)n) != (int)n)
 		ioerr("write", s);
 }
@@ -300,13 +255,10 @@ Write(s, fd, a, n)
 /*
  * Bring into memory block n of File f
  */
-Fgetblock(f, n)
-	register File *f;
-	register n;
-{
+void Fgetblock(File *f, int n){
 	if(n==f->curblk || n<0 || n>=f->nblocks)	/* last two are just safety */
 		return;
-	strinsure(&f->str, (ulong)f->block[n].nbytes);
+	Strinsure(&f->str, (ulong)f->block[n].nbytes);
 	seek(f->block[n].bnum);
 	Read(tempname, tempfile, f->str.s, f->block[n].nbytes);
 	f->str.n=f->block[n].nbytes;
@@ -316,10 +268,7 @@ Fgetblock(f, n)
 /*
  * do lseek to the start of the named block 
  */
-static
-seek(b)
-	register b;
-{
+static void seek(int b){
 	if(lseek(tempfile, b*(long)BLOCKSIZE, 0) == -1L)
 		ioerr("lseek", tempname);
 }
@@ -327,10 +276,8 @@ seek(b)
 /*
  * Insert a new block into f after block f->curblk
  */
-makeblock(f, n)
-	register File *f;
-{
-	register Block *b;
+void makeblock(File *f, int n){
+	Block *b;
 
 	if(f->nblocks>=f->nalloc)
 		growblock(f);
@@ -347,10 +294,8 @@ makeblock(f, n)
  * more disk blocks.  f->curblk is left at the BEGINNING
  * of the original block, but the associated string may be shorter.
  */
-Fputblock(f)
-	register File *f;
-{
-	register nbytes=f->str.n;
+void Fputblock(File *f){
+	int nbytes=f->str.n;
 
 	if(f->curblk<0)
 		return;
@@ -363,17 +308,14 @@ Fputblock(f)
 /*
  * Split f->curblk by moving bytes after position n into new block
  */
-splitblock(f, n)
-	register File *f;
-	long n;
-{
-	register long nchop=f->str.n-n;
+int splitblock(File *f, long n){
+	long nchop=f->str.n-n;
 
 	if(nchop==0)
 		return 0;	/* why do anything? */
 	(void)makeblock(f, (int)nchop);
 	Write(tempname, tempfile, f->str.s+n, nchop);
-	strdelete(&f->str, (ulong)n, (ulong)(n+nchop));
+	Strdelete(&f->str, (ulong)n, (ulong)(n+nchop));
 	f->block[f->curblk].nbytes-=nchop;
 	return 1;
 }
@@ -381,13 +323,10 @@ splitblock(f, n)
  * Seek to absolute location m in file.  Pick up the block
  * and return character number of that location in the block.
  */
-Fseek(f, m)
-	register File *f;
-	register long m;
-{
-	register long i;
-	register bn;
-	register Block *b;
+int Fseek(File *f, long m){
+	long i;
+	int bn;
+	Block *b;
 
 	for(i=0,bn=0,b=f->block; b<&f->block[f->nblocks]; b++,bn++){
 		if(i+b->nbytes >= m)
@@ -406,12 +345,8 @@ Fseek(f, m)
 /*
  * Insert the n-character string s at location m in file f
  */
-Finstext(f, m, s)
-	register File *f;
-	register long m;
-	register String *s;
-{
-	strinsert(&f->str, s, (ulong)Fseek(f, m));
+void Finstext(File *f, long m, String *s){
+	Strinsert(&f->str, s, (ulong)Fseek(f, m));
 	if((f->block[f->curblk].nbytes=f->str.n)>BLOCKSIZE)	/* write the block */
 		Fputblock(f);
 	if(s->n>0)
@@ -421,13 +356,9 @@ Finstext(f, m, s)
 /*
  * Delete n characters at absolute location m in file f.
  */
-Fdeltext(f, m, n)
-	register File *f;
-	register long m;
-	register long n;
-{
-	register long nbytes, loc;
-	register Block *b;
+void Fdeltext(File *f, long m, long n){
+	long nbytes, loc;
+	Block *b;
 	if(n>0)
 		modified(f);
 	while(n > 0){
@@ -439,7 +370,7 @@ Fdeltext(f, m, n)
 		nbytes=min((long)n, (long)f->str.n-loc);
 		if(nbytes<=0)	/* at EOF */
 			break;
-		strdelete(&f->str, (ulong)loc, (ulong)loc+nbytes);
+		Strdelete(&f->str, (ulong)loc, (ulong)loc+nbytes);
 		if((f->block[f->curblk].nbytes-=nbytes)<=0 && f->nblocks>1){
 			relblock(&f->block[f->curblk]);
 			for(b= &f->block[f->curblk]; b<&f->block[f->nblocks]; b++)
@@ -454,16 +385,11 @@ Fdeltext(f, m, n)
 /*
  * Set String b to string in file f at m, n chars long
  */
-Fsave(f, b, m, n)
-	register File *f;
-	register String *b;
-	register long m;
-	register long n;
-{
-	register loc, nbytes;
-	register char *p;
+void Fsave(File *f, String *b, long m, long n){
+	int loc, nbytes;
+	char *p;
 
-	strinsure(b, (ulong)n);
+	Strinsure(b, (ulong)n);
 	b->n=0;
 	while(n>0){
 		loc=Fseek(f, m+1)-1;
@@ -483,13 +409,10 @@ Fsave(f, b, m, n)
  * Return posn of char after first newline after posn, where
  * posn is expressed as a fraction (range 0-YMAX) of the total file length
  */
-Forigin(f, posn)
-	register File *f;
-	register long posn;
-{
-	register int n;
-	register long l;
-	register char *p;
+int Forigin(File *f, long posn){
+	int n;
+	long l;
+	char *p;
 	posn=((l=length(f))*posn)/YMAX;
 	if(posn==0)
 		return 0;
@@ -508,15 +431,11 @@ Forigin(f, posn)
 /*
  * Count newlines before character position
  */
-long
-Fcountnl(f, charno)
-	register File *f;
-	register long charno;
-{
-	register long posn=0;
-	register char *p;
-	register int nl=1;
-	register int n;
+long Fcountnl(File *f, long charno){
+	long posn=0;
+	char *p;
+	int nl=1;
+	int n;
 	charno=min(length(f), charno);
 	for(;;){
 		if((n=Fseek(f, posn+1)-1)<0)
@@ -532,16 +451,11 @@ Fcountnl(f, charno)
 /*
  * Number of characters forward to after nlines'th \n after posn
  */
-long
-Fforwnl(f, posn, nlines)
-	register File *f;
-	register long posn;
-	register int nlines;
-{
-	register long nchars=0;
-	register char *p;
-	register long l=length(f);
-	register int n;
+long Fforwnl(File *f, long posn, int nlines){
+	long nchars=0;
+	char *p;
+	long l=length(f);
+	int n;
 
 	if(nlines<=0)
 		return 0;
@@ -557,15 +471,10 @@ Fforwnl(f, posn, nlines)
 /*
  * Number of characters backward to after nlines'th \n before posn
  */
-long
-Fbacknl(f, posn, nlines)
-	register File *f;
-	register long posn;
-	register int nlines;
-{
-	register long nchars=0;
-	register char *p;
-	register int n;
+long Fbacknl(File *f, long posn, int nlines){
+	long nchars=0;
+	char *p;
+	int n;
 
 	if(nlines<=0)
 		return 0;
@@ -582,20 +491,14 @@ Fbacknl(f, posn, nlines)
 				return nchars;
 	}
 }
-long
-min(a, b)
-	register long a, b;
-{
+long min(int a, int b){
 	if(a<b)
 		return a;
 	return b;
 }
-long
-length(f)
-	register File *f;
-{
-	register Block *b=f->block;
-	register long n=0;
+long length(File *f){
+	Block *b=f->block;
+	long n=0;
 	while(b<&f->block[f->nblocks])
 		n+=b++->nbytes;
 	return n;

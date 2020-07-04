@@ -1,4 +1,8 @@
+#if defined(sun)
 #include <strings.h>
+#elif defined(linux)
+#include <string.h>
+#endif
 #include <blit.h>
 #include <menu.h>
 
@@ -12,8 +16,6 @@ static void	helpoff(Bitmap **);
 	(outmin + muldiv(x-inmin,outmax-outmin,inmax-inmin))
 
 #define bound(x, low, high) min(high, max( low, x ))
-
-static Font *font = &defont;
 
 #define SPACING		(1+fontheight(font))
 #define CHARWIDTH	fontwidth(font)
@@ -135,7 +137,7 @@ PaintMenu:
 				*to++ = *from;
 		*to = '\0';
 		q.x += (width-strwidth(font,fill))/2;
-		string(&screen, q, &defont, fill, ~0, D^S);
+		string(&screen, q, font, fill, ~0, D^S);
 		if(mi->next){
 			if ( !arrow ) {
 				arrow = balloc(Rect(0,0,16,16), 0);
@@ -251,7 +253,7 @@ static void helpon(char *msg, Rectangle r, Bitmap **bhelp){
 	Bitmap *b;
 	int w;
 
-	w = strwidth(&defont, msg)+10;
+	w = strwidth(font, msg)+10;
 	if(r.max.x+w < screen.r.max.x){
 		r.min.x = r.max.x;
 		r.max.x += w;

@@ -1,5 +1,7 @@
 #include "jim.h"
 #include "file.h"
+#include <strings.h>
+#include <stdarg.h>
 
 #define	PATSIZ	128
 
@@ -45,7 +47,7 @@ int forward;
 int needand, needator;
 int nccl;
 char cclarea[NCCL*16];
-char	bittab[] = {
+unsigned char bittab[] = {
 	1,
 	2,
 	4,
@@ -74,9 +76,27 @@ typedef struct Match{
 Match match[NMATCH+1];
 int nmatch;
 char *compilepat;
-compile(s, save)
-	char *s;
-{
+void compile(char *s, int save);
+void optimize(void);
+void reerror(char *s);
+void pushand(Node *b, Node *e);
+Stack *popand(void);
+void pushator(Node *o);
+void popto(int op);
+void expr(void);
+void startpat(char *s);
+char *cclblock(void);
+void advpat(void);
+Node *new(int op);
+void old(Node *n);
+void addtolist(List *l, Node *n, long sp);
+int execute(File *f, int c);
+int fexecute(File *f);
+int bexecute(File *f);
+void newmatch(long b, long e);
+void postcompress(void);
+void killlater(List *lp, long b);
+void compile(char *s, int save){
 	if(strlen(s)>=PATSIZ)
 		error("pattern too long\n", (char *)0);
 	forward=1;
@@ -93,7 +113,7 @@ compile(s, save)
 		strcpy(pattern, s);
 	mustcompile=FALSE;
 }
-optimize(){
+void optimize(){
 	register Node *inst, *target;
 	for(inst=node; inst->op!=0; inst++){
 		target=inst->right;
@@ -102,39 +122,30 @@ optimize(){
 		inst->right=target;
 	}
 }
-reerror(s)
-	char *s;
-{
+void reerror(char *s){
+	void dprint(char *a, ...);
 	mustcompile=TRUE;
-	dprintf("%s - ", compilepat);
+	dprint("%s - ", compilepat);
 	error("RE error:", s);
 }
-pushand(b, e)
-	register Node *b, *e;
-{
+void pushand(Node *b, Node *e){
 	if(andp >= &andstack[NSTACK])
 		reerror("(compiler) operand overflow");
 	andp->b=b;
 	andp++->e=e;
 }
-Stack *
-popand()
-{
+Stack *popand(){
 	if(andp <= andstack)
 		reerror("operand stack underflow");
 	return --andp;
 }
-pushator(o)
-	register Node *o;
-{
+void pushator(Node *o){
 	if(atorp >= &atorstack[NSTACK])
 		reerror("too many operators");
 	popto(o->op);
 	*atorp++=o;
 }
-popto(op)
-	register op;
-{
+void popto(int op){
 	register Node *p, *q;
 	register Stack *a1, *a2;
 	if(op==LPAR)
@@ -201,8 +212,7 @@ popto(op)
 		}
 	}
 }
-expr()
-{
+void expr(){
 	register Node *n;
 	for(;; advpat()){
 		n=thisnode;
@@ -262,9 +272,7 @@ expr()
 			
 	}
 }
-startpat(s)
-	char *s;
-{
+void startpat(char *s){
 	register Node *n;
 	if(forward){
 		for(n=node; n<&node[NNODE]; n++)
@@ -278,18 +286,16 @@ startpat(s)
 	needator=0;
 	advpat();
 }
-char *
-cclblock(){
+char *cclblock(){
 	register char *p;
-	register i;
+	int i;
 	if(nccl >= NCCL)
 		reerror("too many character classes");
 	for(p=cclarea+nccl*16, i=0; i<16; i++)
 		*p++=0;
 	return cclarea+(nccl++*16);
 }
-advpat()
-{
+void advpat(){
 	thisnode=new(0);
 	switch(this= *patp++){
 	case 0:
@@ -336,7 +342,7 @@ advpat()
 		this=RPAR;
 		break;
 	case '[':{
-		register neg=0, cclcnt, c;
+		register int neg=0, cclcnt, c;
 		register char *ccl, *cstart;
 		this=CCLASS;
 		if((c = *patp++) == '^') {
@@ -370,9 +376,7 @@ advpat()
 	}
 	thisnode->op=this;
 }
-Node *
-new(op)
-{
+Node *new(int op){
 	register Node *n;
 	for(n=node; n->op; n++)
 		if(n>=&node[NNODE-1])
@@ -382,16 +386,10 @@ new(op)
 	n->left=0;
 	return n;
 }
-old(n)
-	Node *n;
-{
+void old(Node *n){
 	n->op=0;
 }
-addtolist(l, n, sp)
-	register List *l;
-	register Node *n;
-	long sp;
-{
+void addtolist(List *l, Node *n, long sp){
 	register List *p;
 	for(p=l; p->node; p++){
 		if(p>=&l[NLIST-5])
@@ -404,10 +402,7 @@ addtolist(l, n, sp)
 	p->startp=sp;
 	(++p)->node=0;
 }
-execute(f, c)
-	File *f;
-	int c;
-{
+int execute(File *f, int c){
 	if(mustcompile)
 		compile(pattern, TRUE);
 	if(c=='/')
@@ -415,13 +410,11 @@ execute(f, c)
 	else
 		return bexecute(f);
 }
-fexecute(f)
-	register File *f;
-{
+int fexecute(File *f){
 	register Node *n;
 	register long startposn=f->selloc+f->nsel;
 	long l=length(f);
-	register flag;
+	int flag;
 	register char *s;
 	int i;
 	char *ends;
@@ -528,13 +521,11 @@ Restart:
 	loc2=match[0].e;
 	return TRUE;
 }
-bexecute(f)
-	register File *f;
-{
+int bexecute(File *f){
 	register Node *n;
 	register long startposn=f->selloc;
 	long l=length(f);
-	register flag;
+	int flag;
 	register char *s;
 	int i;
 	char *ends;
@@ -651,9 +642,7 @@ Restart:
 		loc1++;
 	return TRUE;
 }
-newmatch(b, e)
-	register long b, e;
-{
+void newmatch(long b, long e){
 	register Match *m, *n;
 	if(searching){	/* kill all threads in the machine with starts later than here */
 		killlater(tlp, b);
@@ -674,8 +663,7 @@ newmatch(b, e)
 	m->e=e;
 	nmatch++;
 }
-postcompress()
-{
+void postcompress(){
 	register Match *m, *n;
 	for(m=match; m<&match[nmatch]; m++){
 		while(m->b==(m+1)->b){
@@ -693,10 +681,7 @@ postcompress()
 		}
 	}
 }
-killlater(lp, b)
-	List *lp;
-	register long b;
-{
+void killlater(List *lp, long b){
 	register List *p, *q;
 	if(forward){
 		for(p=lp; p->node; p++)

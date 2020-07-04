@@ -3,11 +3,13 @@ MALLOC=malloc.o
 MALLOC=
 OFILES=cache.o lib.o pad.o popen.o term.o menu.o remote.o \
 	sf.o padrcv.o stats.o help.o trace.o popen.o $(MALLOC)
-CFLAGS=-I.. -g
+MACH	= -m32
+CFLGS=-I.. -g $(MACH)
+CFLAGS=-I.. -g $(MACH) -erroff=badinitstr
 CC=CC
 LIB=libpads.a
 LIBDIR= $(HOME)/lib
-INSTALL= /usr/gnu/bin/install
+INSTALL= install
 
 all: ${LIB}
 
@@ -17,7 +19,7 @@ ${LIB}: ${OFILES}
 ${OFILES}: ../pads.h
 
 trace.o: trace.c
-	cc ${CFLAGS} -c trace.c
+	cc ${CFLGS} -c trace.c
 
 malloc.o: malloc.c
 	cc ${CFLAGS} -c malloc.c

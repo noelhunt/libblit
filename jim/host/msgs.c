@@ -25,16 +25,16 @@ char *top[]={
 	"WRITE",
 };
 #endif
+#include <unistd.h>
 #include "msgs.h"
+void rescue(int);
+void ioerr(char*, char*);
+void mesg(char*, char*);
 /*
  * Unix-side message code for communicating with Jerq.
  */
 Message m;
-send(f, op, posn, n, d)
-	unsigned f, n;
-	int op, posn;
-	register char *d;
-{
+void send(unsigned f, int op, int posn, unsigned n, char *d){
 	char cbuf[sizeof(Message)];	/* big enough, anyway */
 #ifdef	TRACE
 	int nn=n;
@@ -56,7 +56,7 @@ send(f, op, posn, n, d)
 	write(2, "\n", 1);
 #endif
 	if(write(1, cbuf, p-cbuf)!=p-cbuf)	/* trouble! */
-		rescue();
+		rescue(1);
 }
 /*
  * States of the receiver FSM
@@ -67,9 +67,8 @@ send(f, op, posn, n, d)
 #define	POSNLO		3
 #define	POSNHI		4
 #define	DATA		5	/* about to receive, or receiving, data */
-rcv()
-{
-	static state, nbytes, nread;
+void rcv(){
+	static int state, nbytes, nread;
 	static char buf[sizeof(Message)];
 	static char *bp, *p;
 	

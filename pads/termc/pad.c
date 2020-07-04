@@ -8,6 +8,7 @@ Point Zpoint;
 ulong tagcols[NCOL];
 ulong padcols[NCOL];
 ulong kbdcols[NCOL];
+ulong menucols[NCOL];
 Rectangle ZRectangle;
 Pad *DirtyPad;
 
@@ -25,6 +26,7 @@ void Proto(int);
 #define DOrange         0xFFA500FF
 
 void PadStart(Rectangle r){
+	extern ulong _fgpixel;
 
 	/* Tag text is pinkish */
 	tagcols[BACK] = pixval(0xFFDDFF, 0);
@@ -37,7 +39,7 @@ void PadStart(Rectangle r){
 	padcols[BORD] = pixval(0x99994C, 0);
 #else
 	padcols[BACK] = pixval(0xF4FAFF, 0);
-	padcols[HIGH] = pixval(0xB5CBB7, 0);
+	padcols[HIGH] = pixval(DPalegreygreen, 0);
 	padcols[BORD] = pixval(0x4F644F, 0);
 #endif
 	padcols[TEXT] = pixval(0x000000, 0);
@@ -49,12 +51,30 @@ void PadStart(Rectangle r){
 	kbdcols[HIGH] = pixval(0x8888CC, 0);
 	kbdcols[BORD] = pixval(0x8888CC, 0);
 #else
-	kbdcols[BACK] = pixval(0xFFEFD5, 0);
-	kbdcols[HIGH] = pixval(0xDD6031, 0);
-	kbdcols[BORD] = pixval(0xDD6031, 0);
+	kbdcols[BACK] = pixval(0xE6FFE6, 0);
+	kbdcols[HIGH] = pixval(DDarkgreen, 0);
+	kbdcols[BORD] = pixval(DMedgreen, 0);
 #endif
 	kbdcols[TEXT] = pixval(0x000000, 0);
 	kbdcols[HTXT] = pixval(0xFFFFFF, 0);
+
+#ifdef PLAN9
+	menucols[BACK] = pixval(0xE6FFE6, 0);
+	menucols[HIGH] = pixval(DDarkgreen, 0);
+	menucols[BORD] = pixval(DMedgreen, 0);
+#else
+# ifdef REDHUE
+	menucols[BACK] = pixval(0xFAE8C8, 0);
+	menucols[HIGH] = pixval(0xCC4444, 0);
+	menucols[BORD] = pixval(0x445C3C, 0);
+# else
+	menucols[BACK] = pixval(0xF9FEC8, 0);
+	menucols[HIGH] = pixval(0x9B870C, 0);
+	menucols[BORD] = pixval(0x99994C, 0);
+# endif
+#endif
+	menucols[TEXT] = _fgpixel;
+	menucols[HTXT] = menucols[BACK];
 }
 
 Point PickPoint( char *s ){
@@ -111,7 +131,7 @@ Return:
 int SWEEPTIMEOUT = 1000*15;
 Rectangle clipgetrect( char *s ) {
 	Rectangle r, r1;
-	long start;
+	int start;
 
 	if( s ) InvertKBDrect( "sweep ", s );
 	for( start = realtime(); ; sleep(2) ){
@@ -173,7 +193,7 @@ Line *InsPos(Pad *p, Line *tk){
 }
 
 void CreateLine(Pad *p){
-	long lo, hi, k;
+	int lo, hi, k;
 	Line *inspos, *l;
 	Line fake;
 	char tilde;
@@ -205,13 +225,17 @@ void PutLine( Pad *p, Protocol op ){
 	char text[1024];			/* 256 ? */
 
 	rcvd = prevrcvd;
+#ifndef __x86_64
 	rcvd.object = RcvLong();
+#else
+	rcvd.object = RcvVLong();
+#endif
         rcvd.oid = RcvShort();
 	if( op == P_NEXTLINE )
 		rcvd.key = ++prevrcvd.key;
 	else {
 		rcvd.key = RcvLong();
-		rcvd.carte = RcvShort();
+		rcvd.carte = RcvLong();
 		rcvd.attributes = RcvShort();
 		prevrcvd = rcvd;
 	}
@@ -344,17 +368,18 @@ void P_Define( Pad *p, long o ){
 		p->sentinel.text = NewString;
 		p->tabs = 8;
 		p->selkey = 0;
+		p->carte = 0;
 	}
 	Dirty( p );
 }
 
 void P_Carte( Pad *p ){
-	Index i = RcvShort();
+	Index i = RcvLong();
 	if( p && p->object ) p->carte = i;
 }
 
 void P_Lines( Pad *p ){
-	long k = RcvLong();
+	int k = RcvLong();
 	if( p ){
 		if( k < p->sentinel.key ) DelLines( p );
 		p->sentinel.key = k;
@@ -393,7 +418,7 @@ void P_Tabs( Pad *p ){
 }
 
 void P_RemoveLine( Pad *p ){
-	long k = RcvLong();
+	int k = RcvLong();
 	Line *l;
 
 	if( !p ) return;
@@ -430,14 +455,14 @@ void Cycle(){
 
 void MakeGap(Pad *p){
 	Line *l, *lsent = &p->sentinel;
-	long k = RcvLong();
-	long gap = RcvLong();
+	int k = RcvLong();
+	int gap = RcvLong();
 
 	for( l = lsent->down; l!=lsent; l = l->down )
 		if( l->key >= k ) l->key += gap;
 }
 
-# undef PROTODEBUG
+#undef PROTODEBUG
 
 # ifdef PROTODEBUG
 #include <stdio.h>
@@ -450,6 +475,9 @@ char *OpToStr(Protocol op){
 	case P_UCHAR: s = "P_UCHAR"; break;
 	case P_SHORT: s = "P_SHORT"; break;
 	case P_LONG: s = "P_LONG"; break;
+#ifdef __x86__64__
+	case P_VLONG: s = "P_VLONG"; break;
+#endif
 	case P_CACHEOP: s = "P_CACHEOP"; break;
 	case P_I_DEFINE: s = "P_I_DEFINE"; break;
 	case P_I_CACHE: s = "P_I_CACHE"; break;
@@ -496,14 +524,18 @@ char *OpToStr(Protocol op){
 
 void PadOp(Protocol op){
 	static long LINEobj;
-	register long obj;
-	register Pad *p;
-	register short t;
+	long obj;
+	Pad *p;
+	short t;
 
 # ifdef PROTODEBUG
 	dprint(1, "PadOp(%s)", OpToStr(op) );
 # endif
+#ifndef __x86_64
 	obj = op == P_NEXTLINE ? LINEobj : RcvLong();
+#else
+	obj = op == P_NEXTLINE ? LINEobj : RcvVLong();
+#endif
 	p = ObjToPad( obj );
 	switch( (int) op ){
 	case P_PADDEF:
@@ -565,7 +597,7 @@ void PadOp(Protocol op){
 		ProtoErr( "PadOp(): " );
 	}
 # ifdef PROTODEBUG
-	dprint(-1, "PadOp(%s)", OpToStr(op) );
+	dprint(0, "PadOp(%s)", OpToStr(op) );
 # endif
 }
 
@@ -573,7 +605,7 @@ void PickOp(){
 	register Pad *p;
 	Index i;
 
-	i = RcvShort();
+	i = RcvLong();
 	p = PickPad(PickPoint(IndexToStr(i)));
 	MakeCurrent(p);
 	while( butts ) wait(MOUSE);
@@ -844,7 +876,7 @@ void PaintKBD()	{ DrawKBD( KBDStr, 0 ); }
 void CarriageReturn(long obj){
 	char *kbds = KBDStr;
 	Line *l, *lsent;
-	long ct;
+	int ct;
 
 	if( obj == LINE_TO_SH ){
 		Proto(P_SHELL);
@@ -871,15 +903,15 @@ void CarriageReturn(long obj){
 			SendString(l->text);
 	} else {
 		Proto(P_KBDSTR);
-		SendLong(Current->object);
+		SendObj(Current->object);
 		SendShort(Current->oid);
 		switch( obj ){
 		case LINE_TO_SEL:
-			SendLong(Selected.line->object);
+			SendObj(Selected.line->object);
 			SendShort(Selected.line->oid);
 			break;
 		case LINE_TO_PAD:
-			SendLong(Current->object);
+			SendObj(Current->object);
 			SendShort(Current->oid);
 			break;
 		}
@@ -900,7 +932,7 @@ void LayerReshaped(){
 	}
 }
 
-long LiveKBD(){
+int LiveKBD(){
 	Line *sel = Selected.line;
 	Pad *cur = Current;
 

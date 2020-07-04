@@ -2,11 +2,22 @@
 #include "jim.h"
 #include "file.h"
 #include "msgs.h"
+#include "func.h"
 #include <stdio.h>
 #include <signal.h>
 #include <sgtty.h>
-#include "/usr/jerq/include/jioctl.h"
 #include <setjmp.h>
+#include <strings.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdarg.h>
+#include <stropts.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+
 #define	NAMELEN	25
 jmp_buf		jmpbuf;
 int		initflag=1;
@@ -16,11 +27,7 @@ extern char	pattern[];
 struct sgttyb	sttybuf;
 struct sgttyb	sttysave;
 char		*argv0;
-int		rescue();
 int		rescuing=FALSE;
-char		*strcpy();
-char		*strncpy();
-char		*getenv();
 File		*getname();
 char		tempname[]="/tmp/jim.XXXXXX";
 int		tempfile;
@@ -28,18 +35,19 @@ int		diagnewline;	/* last char in diagnostic line was a `\n' */
 int		searchdir;
 int		unixtype;
 char		*homedir;
-String		lookstring;
+String		lookString;
 #define	CMDSIZE	128
 char	unixcmd[CMDSIZE];
-main(argc, argv)
-	char *argv[];
-{
-	register i;
+void	Unix(File*, int, char*, int, int);
+void	compile(char*, int);
+int	execute(File*, int);
+void main(int argc, char *argv[]){
+	int i;
 	SIG_TYP onhup;
 	char *mktemp();
 	char *jerqprog="/usr/jerq/mbin/jim.m";
 	int fflag=0;
-	register File *f;
+	File *f;
 
 	argv0=argv[0];
 	if(argc>2 && strcmp(argv[1], "-f")==0){
@@ -57,6 +65,7 @@ main(argc, argv)
 	}
 	if(!fflag)	/* probably debugging */
 		unlink(tempname);
+	ioctl(0, I_PUSH, "ttcompat");
 	ioctl(0, TIOCGETP, &sttysave);
 	sttybuf=sttysave;
 	sttybuf.sg_flags=RAW|ANYP;
@@ -68,15 +77,15 @@ main(argc, argv)
 	if(!boot(jerqprog))
 		quit("32ld errors");
 	ioctl(0, TIOCEXCL, 0);	/* Exclusive use */
-	strinit(&buffer);
-	strinit(&transmit);
-	strinit(&lookstring);
+	Strinit(&buffer);
+	Strinit(&transmit);
+	Strinit(&lookString);
 	Fload(Fcreat(Fnew(), ""));	/* DIAG */
 	/* DIAG's name is built in to jim.m; don't need to jerqname() */
 	--argc, argv++;
 	if(argc>=MAXFILES){
 		argc=MAXFILES-1;
-		dprintf("only %d files open\n", MAXFILES-1);
+		dprint("only %d files open\n", MAXFILES-1);
 	}
 	for(i=0; i<argc; i++){
 		f=Fnew();
@@ -85,11 +94,11 @@ main(argc, argv)
 		unmodified(Fcreat(f, jerqname(f, argv[i])));
 	}
 	if(f=file[0].next){	/* assignment = */
-		dprintf("grabbing %s\n", charstar(&f->name));
+		dprint("grabbing %s\n", charstar(&f->name));
 		send(f->id, O_SWEEP, 0, 0, (char *)0);
 	}
 	initflag=0;
-	signal(SIGPIPE, (int (*)())1);	/*  so if stdout closes we don't die */
+	signal(SIGPIPE, (void (*)(int))1);	/*  so if stdout closes we don't die */
 	onhup=signal(SIGHUP, rescue);
 	if(onhup==SIG_IGN)
 		(void)signal(SIGHUP, SIG_IGN);
@@ -100,11 +109,7 @@ main(argc, argv)
 		message();
 	}
 }
-char *
-jerqname(cf, s)
-	register File *cf;
-	register char *s;
-{
+char *jerqname(File *cf, char *s){
 	char buf[128+1];
 	namecompact(s, buf);
 	sendstr(cf->id, O_FILENAME, 0, buf);
@@ -113,12 +118,9 @@ jerqname(cf, s)
 /*
  * Compact path elements in as, result in ad
  */
-namecompact(as, ad)
-	char *as, *ad;
-{
-	register char *s=as, *d=ad, *slash;
-	register len;
-	extern char *index();
+void namecompact(char *as, char *ad){
+	char *s=as, *d=ad, *slash;
+	int len;
 	
 	if(strlen(as)>NAMELEN){
 		/* copy to first '/' */
@@ -130,7 +132,7 @@ namecompact(as, ad)
 				s++;
 			if(*s)
 				*d++ = *s++;	/* an interesting non-slash */
-			if((slash=index(s, '/')) == 0)
+			if((slash=strchr(s, '/')) == 0)
 				break;
 			s=slash;
 		}
@@ -141,10 +143,9 @@ namecompact(as, ad)
 		strcpy(ad, d);	/* only works because of order in strcpy */
 	}
 }
-rescue()
-{
-	register fd;
-	register File *f;
+void rescue(int s){
+	int fd;
+	File *f;
 	char buf[512];
 	char name[256];
 	int nnameless=0;
@@ -176,13 +177,12 @@ rescue()
 	}
 	quit("HUP");
 }
-message()
-{
-	register File *f=Fileid((int)m.file);
-	register n, op;
-	register posn;
-	register unsigned char *data;
-	register data2;
+void message(){
+	File *f=Fileid((int)m.file);
+	int n, op;
+	int posn;
+	unsigned char *data;
+	int data2;
 	n=m.nbytes;
 	op=m.op;
 	posn=m.posn;
@@ -191,11 +191,11 @@ message()
 	data[n]=0;
 	switch(op){
 	case O_SETSNARF:	/* set snarf buffer */
-		strinsure(&buffer, (ulong)posn);
+		Strinsure(&buffer, (ulong)posn);
 		buffer.n=posn;
 		do{
 			rcv();
-			bcopy(m.data, m.data+m.nbytes, buffer.s+m.posn, 1);
+			Bcopy(m.data, m.data+m.nbytes, buffer.s+m.posn, 1);
 		}while(m.nbytes);
 		break;
 	case O_DIAGNOSTIC:	/* end of input */
@@ -209,19 +209,19 @@ message()
 		/* posn: -2: look for text; 0: prev search; 1: prev unix */
 		if(posn<0){
 			if(f->nsel==0 && buffer.n==0)
-				dprintf("no pattern selected\n");
+				dprint("no pattern selected\n");
 			else{
-				extern mustcompile;
+				extern int mustcompile;
 				if(f->nsel==0)
 					compile(charstar(&buffer), FALSE);
 				else{
-					Fsave(f, &lookstring, f->selloc, f->nsel);
-					compile(charstar(&lookstring), FALSE);
+					Fsave(f, &lookString, f->selloc, f->nsel);
+					compile(charstar(&lookString), FALSE);
 				}
 				if(execute(f, '/'))
 					moveto(f, loc1, loc2);
 				else
-					dprintf("%s not found\n", charstar(f->nsel? &lookstring : &buffer));
+					dprint("%s not found\n", charstar(f->nsel? &lookString : &buffer));
 				mustcompile=TRUE;
 			}
 		}else if(posn==1 || searchdir==0)
@@ -230,7 +230,7 @@ message()
 			if(searchdir && execute(f, searchdir))
 				moveto(f, loc1, loc2);
 			else
-				dprintf("%s not found\n", pattern);
+				dprint("%s not found\n", pattern);
 		}
 		send(0, O_DONE, 0, 0, (char *)0);
 		break;
@@ -338,23 +338,18 @@ message()
 		error("unix unk", (char *)data);
 	}
 }
-char *
-skipbl(p)
-	register char *p;
-{
+char *skipbl(char *p){
 	while(*p==' ' || *p=='\t')
 		p++;
 	return p;
 }
-commands(f)
-	register File *f;
-{
-	register char *p;
+void commands(File *f){
+	char *p;
 	char fname[128];
-	register c, i;
-	register char *s;
+	int c, i;
+	char *s;
 	int wholefile=FALSE;
-	straddc(&DIAG->str, '\0');
+	Straddc(&DIAG->str, '\0');
 	p=DIAG->str.s;
 	switch(c = *p){
 	case 0:
@@ -367,15 +362,15 @@ commands(f)
 		if(*++p)
 			compile(p, TRUE);
 		else
-			dprintf("%c%s\n", c, pattern);
+			dprint("%c%s\n", c, pattern);
 		send(0, O_SEARCH, 0, 0, (char *)0);
 		if(execute(f, searchdir=c))
 			moveto(f, loc1, loc2);
 		else
-			dprintf("%s not found\n", pattern);
+			dprint("%s not found\n", pattern);
 		break;
 	case '=':
-		dprintf("%d\n", Fcountnl(f, f->selloc));
+		dprint("%d\n", Fcountnl(f, f->selloc));
 		break;
 	case '*':
 		if((c=p[1])!='<' && c!='|' && c!='>')
@@ -389,7 +384,7 @@ commands(f)
 		if(*++p){
 			strncpy(unixcmd, p, CMDSIZE);
 		}else
-			dprintf("%c%s\n", c, unixcmd);
+			dprint("%c%s\n", c, unixcmd);
 		send(0, O_SEARCH, 1, 0, (char *)0);
 		Unix(f, unixtype=c, unixcmd, wholefile, 1);
 		break;
@@ -451,8 +446,8 @@ commands(f)
 				(void)jerqname(f, fname);
 				modified(f);
 			}
-			strdup(&f->name, fname);
-			dprintf("%c. %s\n", " '"[f->changed], fname);
+			Strdup(&f->name, fname);
+			dprint("%c. %s\n", " '"[f->changed], fname);
 			checkifdups(f);
 			break;
 		}
@@ -469,7 +464,7 @@ commands(f)
 		}else if(c=='w'){
 			if(f->name.n==0){
 				f->date=DUBIOUS;
-				strdup(&f->name, jerqname(f, fname));
+				Strdup(&f->name, jerqname(f, fname));
 			}
 			Fwrite(f, bldstring(fname), 0);
 			mesg("wrote", fname);
@@ -481,7 +476,7 @@ commands(f)
 		if(f=getname(strcpy(fname, skipbl(p+1))))
 			send(f->id, O_SWEEP, 0, 0, (char *)0);
 		else
-			dprintf("no files\n");
+			dprint("no files\n");
 		break;
 	case 'q':
 		if(fileschanged)
@@ -497,21 +492,18 @@ commands(f)
 		/* fall through */
 	default:
 	Default:
-		dprintf("you typed: '%s'\n", DIAG->str.s);
+		dprint("you typed: '%s'\n", DIAG->str.s);
 	}
 }
-checkifdups(f)
-	register File *f;
-{
-	register File *g;
+void checkifdups(File *f){
+	File *g;
 	for(g=file[0].next; g; g=g->next)
 		if(f!=g && f->name.n==g->name.n
 			&& strncmp(f->name.s, g->name.s, (int)f->name.n)==0)
-			dprintf("warning: %s already loaded\n", charstar(&f->name));
+			dprint("warning: %s already loaded\n", charstar(&f->name));
 }
-writechanged()
-{
-	register File *f;
+void writechanged(){
+	File *f;
 	for(f=file[0].next; f; f=f->next)
 		if(f->name.s && f->name.n && f->changed){
 			Fwrite(f, &f->name, 0);
@@ -519,29 +511,22 @@ writechanged()
 			unmodified(f);
 		}
 }
-char *
-data2(n){
+char *data2(int n){
 	static char x[2];
 	x[0]=n;
 	x[1]=n>>8;
 	return x;
 }
-long
-labs(a)
-	long a;
-{
+long labs(long a){
 	if(a<0)
 		return -a;
 	return a;
 }
-moveto(f, p1, p2)
-	register File *f;
-	register long p1, p2;
-{
-	register long p0=p1-Fbacknl(f, p1-1, 2)-1;
-	register long nseen;	/* number of chars on screen */
-	register posn, ntosend;
-	register long x;
+void moveto(File *f, long p1, long p2){
+	long p0=p1-Fbacknl(f, p1-1, 2)-1;
+	long nseen;	/* number of chars on screen */
+	int posn, ntosend;
+	long x;
 	if(p0<0)
 		p0=0;
 	/* Try to save some screen redrawing */
@@ -569,11 +554,9 @@ moveto(f, p1, p2)
 	send(f->id, O_MOVE, posn, 2, data2(ntosend));
 	tellseek(f);
 }
-tellseek(f)
-	register File *f;
-{
-	register n;
-	register l=length(f);
+void tellseek(File *f){
+	int n;
+	int l=length(f);
 	if(l>0)
 		n=f->origin*YMAX/l;
 	else
@@ -593,12 +576,12 @@ void error(char *s, char *t){
 	if(!initflag)
 		longjmp(jmpbuf, 0);
 }
-void quit(s)
-	char *s;
-{
-	register File *f;
+void quit(char *s){
+	File *f;
+#ifdef NOTDEF
 	if(strcmp(s, "32ld errors")!=0 && strcmp(s, "HUP")!=0)
 		ioctl(0, JTERM, (struct sgttyb *)0);
+#endif
 	for(f=file; f; f=f->next)
 		if(f->str.s != 0)
 			Fclose(f);
@@ -609,24 +592,17 @@ void quit(s)
 	MONITOR(0);
 	exit(0);
 }
-ioerr(s, t)
-	register char *s, *t;
-{
-	extern errno;
+void ioerr(char *s, char *t){
+	extern int errno;
 	char buf[128];
-	sprintf(buf, "%s error (%d) on %s", s, errno, t);
+	sprintf(buf, "%s error (%d) on %s", s, errno, t);
 	error(buf, (char *)0);
 }
-mesg(s, t)
-	register char *s, *t;
-{
-	dprintf(t? "%s %s\n": "%s\n", s, t);
+void mesg(char *s, char *t){
+	dprint(t? "%s %s\n": "%s\n", s, t);
 }
-sendstr(f, op, posn, d)
-	unsigned f;
-	register char *d;
-{
-	register n=strlen(d), l;
+void sendstr(unsigned f, int op, int posn, char *d){
+	int n=strlen(d), l;
 	do{
 		if((l=n)>NDATA)
 			l=NDATA;
@@ -637,15 +613,16 @@ sendstr(f, op, posn, d)
 	}while(n>0);
 }
 /*VARARGS1*/
-dprintf(a, b, c, d, e, f, g)
-	char *a;
-{
-	register s;
-	String junk;	/* avoid bldstring() to avoid clashes with others */
+void dprint(char *a, ...){
+	int s;
+	String junk;	/* avoid bldString() to avoid clashes with others */
 	char buf[128];
+	va_list va;
 	if(rescuing)
 		return;
-	sprintf(buf, a, b, c, d, e, f, g);
+	va_start(va, a);
+	vsprintf(buf, a, va);
+	va_end(va);
 	sendstr(0, O_DIAGNOSTIC, 0, buf);
 	if(diagnewline)
 		Freset(DIAG);
@@ -665,16 +642,12 @@ void panic(char *s){
 	sendstr(0, O_DIAGNOSTIC, 0, " (call rob)");
 	abort();
 }
-boot(s)
-	char *s;
-{
-	if(system("/usr/jerq/bin/32ld", "32ld", zflag, s))
+int boot(char *s){
+	if(System("/usr/jerq/bin/32ld", "32ld", zflag, s))
 		return(0);
 	return(1);
 }
-system(s, t, u, v)
-char *s, *t, *u, *v;
-{
+int System(char *s, char *t, char *u, char *v){
 	int status, pid, l;
 
 	if ((pid = fork()) == 0) {
@@ -687,9 +660,7 @@ char *s, *t, *u, *v;
 		status = -1;
 	return(status);
 }
-modified(f)
-	File *f;
-{
+void modified(File *f){
 	if(f!=DIAG){	/* we can change DIAG all we want */
 		if(!f->changed){
 			f->changed=TRUE;
@@ -698,9 +669,7 @@ modified(f)
 		fileschanged=TRUE;
 	}
 }
-unmodified(f)
-	File *f;
-{
+void unmodified(File *f){
 	if(f!=DIAG && f->changed){
 		f->changed=FALSE;
 		send(f->id, O_MODIFIED, FALSE, 0, (char *)0);

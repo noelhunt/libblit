@@ -1,6 +1,10 @@
 #include <stdlib.h>
 #include <unistd.h>
-#include <strings.h>
+#if defined(sun)
+# include <strings.h>
+#elif defined(linux)
+# include <string.h>
+#endif
 #include <blit.h>
 #define PADS_TERM
 #include <pads.h>
@@ -9,7 +13,7 @@
 #ifdef assert
 #undef assert
 #endif
-#define assert(e,s) ( assertf( (long) (e), (s) ) )
+#define assert(e,s) ( assertf( (int) (e), (s) ) )
 #define salloc(s) ((struct s*) Alloc(sizeof(struct s)) )
 #define ISPAD(p)	((p) != &Sentinel)
 #define ISLINE(l,p)	((l) != &(p)->sentinel)	/* used how much? */
@@ -65,7 +69,7 @@ typedef struct Line {
  struct	Line		*down;
  struct	Line		*up;
 	char		*text;
-	long		key;
+	int		key;
 	Rectangle	rect;
 } Line;
 
@@ -89,7 +93,7 @@ typedef struct Pad {
 #endif
 	char		*name;
 	Line		sentinel;
-	long		selkey;
+	int		selkey;
 	short		lo;
 	short		hi;
 	short		ticks;
@@ -141,6 +145,7 @@ extern Rectangle KBDrect;
 extern ulong tagcols[];
 extern ulong padcols[];
 extern ulong kbdcols[];
+extern ulong menucols[];
 
 #define BIGMEMORY 1
 #define NOVICEUSER 2
@@ -209,9 +214,9 @@ Carte *IndexToCarte(Index);
 void FlushRemote(void);
 int GetRemote(void);
 void PutRemote(char);
-void ToHost(Protocol, long);
+void ToHost(Protocol, int);
 void HostAction(Index*);
-void HostNumeric(long);
+void HostNumeric(int);
 void RCVServe(void);
 void HelpString(void);
 void ProtoErr(char*);
@@ -219,7 +224,7 @@ void ALARMServe(void);
 /* lib.c */
 char *itoa(int);
 int dictorder(char*, char*);
-long assertf(long,char*);
+int assertf(int,char*);
 Point dxordy(Point);
 Rectangle boundrect(Rectangle, Rectangle);
 Rectangle scrollbar(Rectangle, int, int, int, int);
@@ -267,7 +272,7 @@ void HeavyBorder(Pad*);
 int ClipPaint(Rectangle, Pad*);
 void PadBlt(Bitmap*, Rectangle, Pad*);
 void Paint(Pad*);
-void LineReq(Pad*, long, long, int);
+void LineReq(Pad*, int, int, int);
 void CRequestLines(Pad*);
 void RequestLines(Pad*);
 void Pointing(void);

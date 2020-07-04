@@ -95,7 +95,7 @@ void Pad::tabs(short n){
 	}
 }
 
-void Pad::removeline(long k){
+void Pad::removeline(int k){
 	trace( "0x%08x.removeline(%d)", this, k );		VOK;
 	R->pktstart( P_REMOVELINE );
 	R->sendobj( _object );
@@ -103,7 +103,7 @@ void Pad::removeline(long k){
 	R->pktend();
 }
 	
-void Pad::createline(long lo, long hi){
+void Pad::createline(int lo, int hi){
 	trace( "0x%08x.createline(%d,%d)", this, lo, hi );		VOK;
 	if( lo>hi ) return;
 	R->pktstart( P_CREATELINE );
@@ -113,14 +113,14 @@ void Pad::createline(long lo, long hi){
 	R->pktend();
 }
 	
-void Pad::createline(long k){
+void Pad::createline(int k){
 	createline(k, k);
 }
 
 #ifdef HELPMENU
 void Pad::helpmenu(){
 	Menu m;
-	long i;
+	int i;
 	static const char *helptags[] = {
 		"overview", "menu bar", "keyboard",
 		"line menus", "line keyboard" };
@@ -148,7 +148,7 @@ void Pad::menu(Index ix){
 	IF_LIVE( !_object ) return;
 	R->pktstart( P_CARTE );
 	R->sendobj( _object );
-	R->sendshort( ix.sht() );
+	R->sendlong( ix.sht() );
 	R->pktend();
 }
 
@@ -168,7 +168,7 @@ void Pad::options(Attrib on, Attrib off){
 	R->pktend();
 }
 
-void Pad::lines(long l){
+void Pad::lines(int l){
 	trace( "0x%08x.lines(%d)", this, l );		VOK;
 	IF_LIVE( l<0 ) return;
 	R->pktstart( P_LINES );
@@ -184,28 +184,28 @@ void Pad::termop(Protocol p){
 	R->pktend();
 }
 
-void Pad::insert(long k, const char *fmt, ...){
+void Pad::insert(int k, const char *fmt, ...){
 	va_list ap;
 	va_start(ap, fmt);
 	vinsert(k, (Attrib)0, (PadRcv*)0, ZIndex, fmt, ap);
 	va_end(ap);
 }
 
-void Pad::insert(long k, Attrib a, const char *fmt, ...){
+void Pad::insert(int k, Attrib a, const char *fmt, ...){
 	va_list ap;
 	va_start(ap, fmt);
 	vinsert(k, a, (PadRcv*)0, ZIndex, fmt, ap);
 	va_end(ap);
 }
 
-void Pad::insert(long k, Attrib a, PadRcv *o, Menu &m, const char *fmt, ...){
+void Pad::insert(int k, Attrib a, PadRcv *o, Menu &m, const char *fmt, ...){
 	va_list ap;
 	va_start(ap, fmt);
 	vinsert(k, a, o, &m ? m.index() : ZIndex, fmt, ap);
 	va_end(ap);
 }
 
-void Pad::vinsert(long k, Attrib a, PadRcv *o, Index ix, const char *fmt, va_list ap){
+void Pad::vinsert(int k, Attrib a, PadRcv *o, Index ix, const char *fmt, va_list ap){
 	Line l;
 	char t[1024];
 
@@ -219,7 +219,7 @@ void Pad::vinsert(long k, Attrib a, PadRcv *o, Index ix, const char *fmt, va_lis
 	insert(l);
 }
 
-void Pad::insert(long k, Attrib a, PadRcv *o, Index ix, const char *fmt, ...){
+void Pad::insert(int k, Attrib a, PadRcv *o, Index ix, const char *fmt, ...){
 	Line l;
 	char t[1024];
 	va_list ap;
@@ -267,7 +267,7 @@ void Pad::insert(Line &l){
 		R->sendobj( l.object );
 		R->sendshort( l.object ? l.object->oid : 0);
 		R->sendlong( l.key );
-		R->sendshort( l.carte.sht() );
+		R->sendlong( l.carte.sht() );
 		R->sendshort( l.attributes );
 	}
 	R->sendstring( buf );
@@ -288,7 +288,7 @@ Line::Line(){
 	carte = 0;
 }
 
-long UniqueKey() { static long u; return u += 1024; }
+int UniqueKey() { static int u; return u += 1024; }
 
 void Pad::error( const char *fmt, ... ){
 	char buf[1024];
@@ -303,7 +303,7 @@ void Pad::error( const char *fmt, ... ){
 	va_end(ap);
 }
 
-void Pad::makegap(long k, long gap){
+void Pad::makegap(int k, int gap){
 	trace( "0x%08x.makegap(%d,%d)", this, k, gap ); VOK;
 	R->pktstart( P_MAKEGAP );
 	R->sendobj( _object );

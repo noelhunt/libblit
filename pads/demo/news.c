@@ -7,7 +7,7 @@ class Story : public PadRcv {
 	FILE	*fp;
 	long	lines;
 	Pad	*pad;
-	void	linereq(long,Attrib);
+	void	linereq(int,Attrib);
 public:
 	void	open();
 		Story(char *f)	{ strncpy( file, f, strlen(f)-1 ); }
@@ -19,7 +19,7 @@ public:
 		News();
 };
 
-int main(){
+int main(int argc, char *argv[]){
 	const char *error = PadsInit(PADSTERM);
 	if( chdir( "/export/home/noel/news" ) ) exit(1);
 	if( error ){
@@ -71,7 +71,7 @@ void Story::open(){
 	pad->makecurrent();
 }
 
-void Story::linereq( long i, Attrib a ){
+void Story::linereq( int i, Attrib a ){
 	char buf[256];
 	long n;
 

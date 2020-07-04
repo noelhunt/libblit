@@ -34,14 +34,14 @@ void main(int argc, char **argv){
 	initdisplay(argc, argv);
 
 	c[1] = 0;
-	h = fontheight(&defont);
+	h = fontheight(font);
 	y = h + 5;
-	w = strwidth(&defont, "m");
+	w = strwidth(font, "m");
 	for(i = 0; ; ){
 		wait(MOUSE|KBD);
 		if(P->state & KBD){
 			c[0] = kbdchar();
-			string(&screen, Pt(10+w*i, y), &defont, c, ~0, D^S);
+			string(&screen, Pt(10+w*i, y), font, c, ~0, D^S);
 			i++;
 			if(i > 50){
 				i = 0;

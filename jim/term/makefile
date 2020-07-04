@@ -5,7 +5,7 @@ F=../frame
 CFILES=main.c frame.c menu.c msgs.c string.c $F/deltext.c $F/fralloc.c $F/frameop.c $F/instext.c $F/ptofchar.c
 FILES=main.o frame.o menu.o msgs.o string.o $F/frame.a
 
-jim.m:	$(FILES) $F/frame.a
+jimterm:	$(FILES) $F/frame.a
 	$(CC) -o jim.m $(FILES)
 $F/frame.a:
 	cd $F; make
@@ -26,9 +26,9 @@ main.o frame.o menu.o:	jim.h
 jim.h:	$F/frame.h menu.h msgs.h
 .PRECIOUS:	frame.a
 
-install:	jim.m
-	cprs jim.m /usr/jerq/mbin/jim.m
+install:	jimterm
+	cprs jimterm /usr/jerq/mbin/jim.m
 
 clean:
-	rm -f *.o jim.m core
+	rm -f *.o jimterm core
 	cd $F; make clean

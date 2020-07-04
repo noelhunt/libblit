@@ -25,7 +25,10 @@ extern Bitmap	*_balloc(Rectangle, int);
 extern Display	*_dpy;
 
 /* Default visual, used in loadbitmap */
-extern Visual	*visual;
+extern Visual	*_vis;
+
+/* Default colormap, used in string */
+extern Colormap	_cmap;
 
 /* screen depth foreground and background for this application */
 extern unsigned long	_fgpixel, _bgpixel;

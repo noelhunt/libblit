@@ -1,9 +1,12 @@
-INCLUDE = -I../libblit
+TERM    = blit
 OPTIONS = -g -Xa $(ARCH)
-DEFINES =
+DEFINES	= -DPOLL -DFREETYPE2
+INCLUDE = -I../lib$(TERM) -I$(HOME)/include -I/usr/include/freetype2
+
+MACH	= -m32	# default on Solaris
 CFLAGS  = $(DEFINES) $(OPTIONS) $(INCLUDE)
-LIB = ../libblit/libblit.a
-LIBS = $(LIB) -lX11
+LIB = ../lib$(TERM)/libblit.a
+LIBS = ${LIB} -lXext -lX11
 TESTS = t0 t1 t2 t3 t4 t5 t6
 CLEANFILES = a.out core *.o null $(TESTS)
 
@@ -14,3 +17,5 @@ t%:     t%.c $(LIB)
 
 clean:
 	rm -f $(CLEANFILES)
+
+install:

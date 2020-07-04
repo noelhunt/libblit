@@ -7,7 +7,7 @@ Index ZIndex;
 
 Menu::Menu() { list = 0; size = 0; }
 
-Menu::Menu(const char *t, Action a, long o){
+Menu::Menu(const char *t, Action a, int o){
 	trace( "0x%08x.Menu(%s,%d,%d)", this, t, a, o );
 	list = 0;
 	size = 0;
@@ -23,14 +23,14 @@ Menu::~Menu(){
 	}
 }
 
-void Menu::first(const char *t, Action a, long o){
+void Menu::first(const char *t, Action a, int o){
 	trace( "0x%08x.first(%s,%d,%d)", this, t, a, o );
 	if (size == MAXMENUSIZE)
 		return;
 	first( ICache->place( Item(t,a,o) ) );
 }
 
-void Menu::last(const char *t, Action a, long o){
+void Menu::last(const char *t, Action a, int o){
 	trace( "0x%08x.last(%s,%d,%d)", this, t, a, o );
 	if (size == MAXMENUSIZE)
 		return;
@@ -65,7 +65,7 @@ int IndexTextCmp( Index a, Index b ){
 	return strcmp( ICache->take(a)->text, ICache->take(b)->text );
 }
 
-void Menu::sort(const char *t, Action a, long o ){
+void Menu::sort(const char *t, Action a, int o ){
 	int cmp;
 	IList **p;
 
@@ -87,7 +87,7 @@ void Menu::sort(const char *t, Action a, long o ){
 	*p = new IList(i,*p);
 }
 
-Index Menu::index(const char *t, Action a, long o){
+Index Menu::index(const char *t, Action a, int o){
 	IList *l;
 	int i;
 	Carte *c;

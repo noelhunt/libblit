@@ -70,7 +70,7 @@ void opdraw(Frame *t, Point p, Point q, char *cp, int n){
 	}
 	*gp=0;
 	p.x++;
-	string(&screen, p, &defont, genbuf, D^S);
+	string(&screen, p, &defont, genbuf, ~0, D^S);
 }
 void draw(Frame *t, Point p, char *s, int n){
 	frameop(t, opdraw, p, s, n);

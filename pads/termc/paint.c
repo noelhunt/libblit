@@ -26,7 +26,7 @@ void HeavyBorder( Pad *p ){
 
 Line *Linei(int i){
 	Line *lsent = Lsent, *l;
-	long ct = 1, k = lsent->key;
+	int ct = 1, k = lsent->key;
 	Line fake;
 
 	if( !i ) return lsent;
@@ -323,14 +323,14 @@ void PadBlt(Bitmap *b, Rectangle r, Pad *p){
 
 void Paint( Pad *p ){ ClipPaint(p->rect,p); }
 
-void LineReq(Pad *p, long lo, long hi, int fake){
+void LineReq(Pad *p, int lo, int hi, int fake){
 	Line *InsPos();
 
 	if( lo == 0 ) lo = 1;
 	if( !p || !p->object || hi < lo ) return;
 	PutRemote( P_LINEREQ );
-	SendLong( p->object ); SendShort(p->oid);
-	SendLong( p->object ); SendShort(p->oid);
+	SendObj( p->object ); SendShort(p->oid);
+	SendObj( p->object ); SendShort(p->oid);
 	SendLong( lo );
 	SendLong( hi );
 	if( fake )
